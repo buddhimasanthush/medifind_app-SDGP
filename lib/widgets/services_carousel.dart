@@ -3,6 +3,7 @@ import '../pages/upload_prescription_page.dart';
 import '../pages/reminder_page.dart';
 import '../pages/previous_orders_page.dart';
 import '../pages/health_profile_page.dart';
+import '../pages/pharmacy_registration_page.dart';
 
 class ServicesCarousel extends StatelessWidget {
   const ServicesCarousel({super.key});
@@ -30,10 +31,15 @@ class ServicesCarousel extends StatelessWidget {
         'icon': Icons.account_circle,
         'page': const HealthProfilePage(),
       },
+      {
+        'name': 'Pharmacy\nRegistration',
+        'icon': Icons.store,
+        'page': const PharmacyRegistrationPage(),
+      },
     ];
 
     return SizedBox(
-      height: 155, // Increased from 150 to fix overflow
+      height: 155, // Height to accommodate text
       child: ListView.builder(
         scrollDirection: Axis.horizontal,
         physics: const BouncingScrollPhysics(),
@@ -100,7 +106,7 @@ class _ServiceItem extends StatelessWidget {
           const SizedBox(height: 8),
           SizedBox(
             width: 125,
-            height: 42, // Increased from 40 to give more room
+            height: 42, // Height to accommodate two lines of text
             child: Text(
               name,
               textAlign: TextAlign.center,

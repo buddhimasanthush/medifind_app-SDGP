@@ -1,8 +1,14 @@
 import 'package:flutter/material.dart';
-import 'home_page.dart';
 import 'reminder_page.dart';
 import 'health_profile_page.dart';
 import 'previous_orders_page.dart';
+import '../widgets/medicine_form_carousel.dart';
+import '../widgets/services_carousel.dart';
+import '../widgets/pharmacy_card.dart';
+import 'cart_page.dart';
+import 'location_selector_page.dart';
+import 'all_services_page.dart';
+import 'pharmacy_list_page.dart';
 
 class MainNavigationPage extends StatefulWidget {
   const MainNavigationPage({super.key});
@@ -137,7 +143,7 @@ class _HomePageContentState extends State<HomePageContent> {
       children: [
         // Background with decorative circles
         _buildBackground(),
-        
+
         // Main scrollable content
         _buildMainContent(),
       ],
@@ -276,7 +282,7 @@ class _HomePageContentState extends State<HomePageContent> {
           // Header Section
           _buildHeader(),
           const SizedBox(height: 20),
-          
+
           // White content card
           Expanded(
             child: Container(
@@ -297,7 +303,7 @@ class _HomePageContentState extends State<HomePageContent> {
                       // Search Bar
                       _buildSearchBar(),
                       const SizedBox(height: 35),
-                      
+
                       // Recent Purchases Section
                       _buildSectionHeader('Recent perchances', onViewAll: () {
                         Navigator.push(
@@ -310,7 +316,7 @@ class _HomePageContentState extends State<HomePageContent> {
                       const SizedBox(height: 20),
                       const MedicineFormCarousel(),
                       const SizedBox(height: 30),
-                      
+
                       // More Services Section
                       _buildSectionHeader('More Services', onViewAll: () {
                         Navigator.push(
@@ -323,7 +329,7 @@ class _HomePageContentState extends State<HomePageContent> {
                       const SizedBox(height: 20),
                       const ServicesCarousel(),
                       const SizedBox(height: 30),
-                      
+
                       // Pharmacies Near You Section
                       _buildSectionHeader('Phamacies Near You', onViewAll: () {
                         Navigator.push(
@@ -558,12 +564,3 @@ class _HomePageContentState extends State<HomePageContent> {
     );
   }
 }
-
-// Import statements for widgets
-import '../widgets/medicine_form_carousel.dart';
-import '../widgets/services_carousel.dart';
-import '../widgets/pharmacy_card.dart';
-import 'cart_page.dart';
-import 'location_selector_page.dart';
-import 'all_services_page.dart';
-import 'pharmacy_list_page.dart';
