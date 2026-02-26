@@ -10,8 +10,8 @@ class WelcomeBackPage extends StatefulWidget {
 class _WelcomeBackPageState extends State<WelcomeBackPage>
     with SingleTickerProviderStateMixin {
   bool _isSignInSelected = true; // Default to Sign In selected
-  late AnimationController _animationController;
-  late Animation<double> _animation;
+  AnimationController? _animationController;
+  Animation<double>? _animation;
 
   @override
   void initState() {
@@ -21,26 +21,28 @@ class _WelcomeBackPageState extends State<WelcomeBackPage>
       vsync: this,
     );
     _animation = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(parent: _animationController, curve: Curves.easeInOut),
+      CurvedAnimation(parent: _animationController!, curve: Curves.easeInOut),
     );
   }
 
   @override
   void dispose() {
-    _animationController.dispose();
+    _animationController?.dispose();
     super.dispose();
   }
 
   void _navigateToPage(bool isSignIn) {
+    if (_animationController == null) return; // Safety check
+
     setState(() {
       _isSignInSelected = isSignIn;
     });
 
     // Animate the pill
     if (isSignIn) {
-      _animationController.reverse();
+      _animationController!.reverse();
     } else {
-      _animationController.forward();
+      _animationController!.forward();
     }
 
     // Wait for animation to finish, then navigate
@@ -52,10 +54,12 @@ class _WelcomeBackPageState extends State<WelcomeBackPage>
           Navigator.pushNamed(context, '/signup');
         }
         // Reset animation after navigation
-        _animationController.reset();
-        setState(() {
-          _isSignInSelected = true;
-        });
+        _animationController?.reset();
+        if (mounted) {
+          setState(() {
+            _isSignInSelected = true;
+          });
+        }
       }
     });
   }
@@ -152,11 +156,12 @@ class _WelcomeBackPageState extends State<WelcomeBackPage>
                   children: [
                     // Animated sliding white pill
                     AnimatedBuilder(
-                      animation: _animation,
+                      animation: _animation ?? AlwaysStoppedAnimation(0.0),
                       builder: (context, child) {
                         final screenWidth = MediaQuery.of(context).size.width;
+                        final animValue = _animation?.value ?? 0.0;
                         final leftPosition =
-                            (_animation.value * (screenWidth / 2)) - 76;
+                            (animValue * (screenWidth / 2)) - 76;
 
                         return Positioned(
                           left: leftPosition,
