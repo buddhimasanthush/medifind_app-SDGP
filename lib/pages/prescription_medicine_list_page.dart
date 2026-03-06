@@ -18,7 +18,7 @@ class Medicine {
       required this.quantity});
 }
 
-// ── Demo list — replace with OCR output later ─────────────────────────────────
+// ── Demo list ─────────────────────────────────────────────────────────────────
 const List<Medicine> _demoMedicines = [
   Medicine(
       name: 'Amoxicillin 500 mg capsule',
@@ -82,7 +82,7 @@ const List<Medicine> _demoMedicines = [
       quantity: 'Qty: 15 tablets'),
 ];
 
-// ── Page (StatefulWidget for animations) ─────────────────────────────────────
+// ── Page ──────────────────────────────────────────────────────────────────────
 class PrescriptionMedicineListPage extends StatefulWidget {
   final List<Medicine>? medicines;
   const PrescriptionMedicineListPage({super.key, this.medicines});
@@ -93,39 +93,18 @@ class PrescriptionMedicineListPage extends StatefulWidget {
 
 class _PrescriptionMedicineListPageState
     extends State<PrescriptionMedicineListPage> with TickerProviderStateMixin {
-  late final List<AnimationController> _sweepControllers;
+  // One controller per pill — shared with _AnimatedSummaryPill
+  late final List<AnimationController> _pillControllers;
   static const _pillCount = 4;
 
   List<Medicine> get _list => widget.medicines ?? _demoMedicines;
   int _count(MedicineType t) => _list.where((m) => m.type == t).length;
 
-  @override
-  void initState() {
-    super.initState();
-    _sweepControllers = List.generate(
-      _pillCount,
-      (i) => AnimationController(
-          vsync: this, duration: const Duration(milliseconds: 1200)),
-    );
-    // Stagger start: each pill animates 200ms after previous
-    for (int i = 0; i < _pillCount; i++) {
-      Future.delayed(Duration(milliseconds: i * 200), () {
-        if (mounted) _sweepControllers[i].forward();
-      });
-    }
-  }
-
-  @override
-  void dispose() {
-    for (final c in _sweepControllers) c.dispose();
-    super.dispose();
-  }
-
-  // Icon data per type: (svgPath, fallback icon)
+  // Correct SVG filenames per user
   static const _iconAssets = [
-    'assets/icons/Group 24.svg', // capsules
-    'assets/icons/Icon (1).svg', // tablets
-    'assets/icons/Group 25.svg', // syrups
+    'assets/icons/Icon-3.svg', // capsules
+    'assets/icons/Icon-6.svg', // tablets
+    'assets/icons/Icon-4.svg', // syrups
     'assets/icons/Icon copy.svg', // vitamines
   ];
   static const _fallbackIcons = [
@@ -134,6 +113,28 @@ class _PrescriptionMedicineListPageState
     Icons.local_drink_rounded,
     Icons.health_and_safety_rounded,
   ];
+
+  @override
+  void initState() {
+    super.initState();
+    _pillControllers = List.generate(
+      _pillCount,
+      (i) => AnimationController(
+          vsync: this, duration: const Duration(milliseconds: 1400)),
+    );
+    // Stagger: 200ms gap between each pill's animation start
+    for (int i = 0; i < _pillCount; i++) {
+      Future.delayed(Duration(milliseconds: i * 220), () {
+        if (mounted) _pillControllers[i].forward();
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    for (final c in _pillControllers) c.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -152,44 +153,38 @@ class _PrescriptionMedicineListPageState
     final labels = ['capsules', 'tablets', 'syrups', 'vitamines'];
 
     return Scaffold(
-      // White body — no blue bleed
       backgroundColor: const Color(0xFFFAFAFA),
       body: Column(
         children: [
-          // ── Blue header (fixed, not scrollable) ──────────────────
+          // ── Blue header ───────────────────────────────────────────
           Container(
             color: const Color(0xFF0796DE),
             child: Stack(
               children: [
-                // Decorative rings
                 Positioned(
-                  left: 37,
-                  top: -60,
-                  child: Container(
-                    width: 120,
-                    height: 120,
-                    decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        border: Border.all(
-                            width: 20, color: const Color(0xFF10A2EA))),
-                  ),
-                ),
+                    left: 37,
+                    top: -60,
+                    child: Container(
+                        width: 120,
+                        height: 120,
+                        decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            border: Border.all(
+                                width: 20, color: const Color(0xFF10A2EA))))),
                 Positioned(
-                  right: -20,
-                  top: 10,
-                  child: Container(
-                    width: 110,
-                    height: 110,
-                    decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        border: Border.all(
-                            width: 20, color: const Color(0xFF10A2EA))),
-                  ),
-                ),
+                    right: -20,
+                    top: 10,
+                    child: Container(
+                        width: 110,
+                        height: 110,
+                        decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            border: Border.all(
+                                width: 20, color: const Color(0xFF10A2EA))))),
                 SafeArea(
                   bottom: false,
                   child: Padding(
-                    padding: const EdgeInsets.fromLTRB(16, 8, 16, 20),
+                    padding: const EdgeInsets.fromLTRB(4, 8, 16, 20),
                     child: Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -199,26 +194,33 @@ class _PrescriptionMedicineListPageState
                           onPressed: () => Navigator.pop(context),
                         ),
                         const Expanded(
-                          child: Column(children: [
-                            SizedBox(height: 4),
-                            Text('List of Medicine',
-                                textAlign: TextAlign.center,
-                                style: TextStyle(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              SizedBox(height: 4),
+                              Text('List of Medicine',
+                                  textAlign: TextAlign.center,
+                                  style: TextStyle(
                                     color: Color(0xFFFAFAFA),
                                     fontSize: 20,
                                     fontFamily: 'Poppins',
-                                    fontWeight: FontWeight.w700)),
-                            SizedBox(height: 6),
-                            Text(
-                                "We've scanned the prescription that you've\nuploaded and list down the medicines",
+                                    fontWeight: FontWeight.w700,
+                                  )),
+                              SizedBox(height: 8),
+                              // ← BOLDER + centred subtitle
+                              Text(
+                                "We've scanned the prescription that\nyou've uploaded and list down\nthe medicines",
                                 textAlign: TextAlign.center,
                                 style: TextStyle(
-                                    color: Color(0xFFA2E0FF),
-                                    fontSize: 10,
-                                    fontFamily: 'Poppins',
-                                    fontWeight: FontWeight.w500,
-                                    height: 1.5)),
-                          ]),
+                                  color: Color(0xFFA2E0FF),
+                                  fontSize: 11,
+                                  fontFamily: 'Poppins',
+                                  fontWeight: FontWeight.w600,
+                                  height: 1.5,
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
                         const SizedBox(width: 48),
                       ],
@@ -229,7 +231,7 @@ class _PrescriptionMedicineListPageState
             ),
           ),
 
-          // ── White card (fills rest of screen) ────────────────────
+          // ── White card ────────────────────────────────────────────
           Expanded(
             child: Container(
               decoration: const BoxDecoration(
@@ -239,7 +241,6 @@ class _PrescriptionMedicineListPageState
                   topRight: Radius.circular(25),
                 ),
               ),
-              // Negative margin to overlap the blue header
               transform: Matrix4.translationValues(0, -20, 0),
               child: Column(
                 children: [
@@ -255,16 +256,16 @@ class _PrescriptionMedicineListPageState
                     ),
                   )),
 
-                  // ── Animated summary pills ──────────────────────
-                  const SizedBox(height: 14),
+                  // ── Summary pills row ─────────────────────────────
+                  const SizedBox(height: 16),
                   Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    padding: const EdgeInsets.symmetric(horizontal: 12),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                       children: List.generate(
                           _pillCount,
                           (i) => _AnimatedSummaryPill(
-                                controller: _sweepControllers[i],
+                                controller: _pillControllers[i],
                                 count: counts[i],
                                 label: labels[i],
                                 svgPath: _iconAssets[i],
@@ -273,13 +274,21 @@ class _PrescriptionMedicineListPageState
                     ),
                   ),
 
+                  // ── Blue separator ────────────────────────────────
                   const SizedBox(height: 14),
-                  const Divider(height: 1, color: Color(0xFFEEEEEE)),
+                  Container(
+                    margin: const EdgeInsets.symmetric(horizontal: 20),
+                    height: 2,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF0796DE),
+                      borderRadius: BorderRadius.circular(1),
+                    ),
+                  ),
 
-                  // ── Scrollable medicine list ──────────────────
+                  // ── Scrollable list ───────────────────────────────
                   Expanded(
                     child: ListView(
-                      padding: const EdgeInsets.fromLTRB(20, 12, 20, 12),
+                      padding: const EdgeInsets.fromLTRB(20, 10, 20, 12),
                       children: [
                         if (capsules.isNotEmpty) ...[
                           _sectionHeader('Capsules'),
@@ -302,7 +311,7 @@ class _PrescriptionMedicineListPageState
                     ),
                   ),
 
-                  // ── Find nearby pharmacy button ───────────────
+                  // ── Find nearby pharmacy button ───────────────────
                   Container(
                     color: const Color(0xFFFAFAFA),
                     padding: const EdgeInsets.fromLTRB(20, 10, 20, 30),
@@ -310,20 +319,15 @@ class _PrescriptionMedicineListPageState
                       width: double.infinity,
                       height: 54,
                       child: ElevatedButton(
-                        onPressed: () {
-                          Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (_) => const NearbyPharmacyPage(),
-                              ));
-                        },
+                        onPressed: () => Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                                builder: (_) => const NearbyPharmacyPage())),
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF0796DE),
-                          elevation: 0,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(30),
-                          ),
-                        ),
+                            backgroundColor: const Color(0xFF0796DE),
+                            elevation: 0,
+                            shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(30))),
                         child: const Text('Find a nearby pharmacy to purchase',
                             style: TextStyle(
                                 color: Colors.white,
@@ -343,19 +347,20 @@ class _PrescriptionMedicineListPageState
   }
 
   Widget _sectionHeader(String title) => Padding(
-        padding: const EdgeInsets.only(top: 6, bottom: 6),
+        padding: const EdgeInsets.only(top: 8, bottom: 6),
         child: Text(title,
             style: const TextStyle(
-                color: Color(0xFF0796DE),
-                fontSize: 13,
-                fontFamily: 'Poppins',
-                fontWeight: FontWeight.w700,
-                letterSpacing: 0.5)),
+              color: Color(0xFF0796DE),
+              fontSize: 13,
+              fontFamily: 'Poppins',
+              fontWeight: FontWeight.w700,
+              letterSpacing: 0.5,
+            )),
       );
 }
 
-// ── Animated summary pill — sweep arc then settle ────────────────────────────
-class _AnimatedSummaryPill extends StatelessWidget {
+// ── Animated pill: ring sweeps, then orbiting dot travels full circle ─────────
+class _AnimatedSummaryPill extends StatefulWidget {
   final AnimationController controller;
   final int count;
   final String label;
@@ -371,31 +376,99 @@ class _AnimatedSummaryPill extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
-    // Sweep from 0 → full circle, then arc fades to just the ring
-    final sweepAnim = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(parent: controller, curve: Curves.easeOut),
+  State<_AnimatedSummaryPill> createState() => _AnimatedSummaryPillState();
+}
+
+class _AnimatedSummaryPillState extends State<_AnimatedSummaryPill> {
+  // Phase 1 (0→0.6): ring sweeps from 0 → full circle
+  // Phase 2 (0.6→1.0): dot orbits from top → full 360° back to top
+  late final Animation<double> _sweepAnim;
+  late final Animation<double> _dotAnim;
+
+  @override
+  void initState() {
+    super.initState();
+    _sweepAnim = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(
+          parent: widget.controller,
+          curve: const Interval(0.0, 0.65, curve: Curves.easeOut)),
     );
+    _dotAnim = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(
+          parent: widget.controller,
+          curve: const Interval(0.55, 1.0, curve: Curves.easeInOut)),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    const size = 72.0;
+    const dotSize = 9.0;
+    const ringRadius = size / 2 - 5;
 
     return Column(
       children: [
         SizedBox(
-          width: 68,
-          height: 68,
+          width: size,
+          height: size,
           child: AnimatedBuilder(
-            animation: sweepAnim,
-            builder: (_, child) => CustomPaint(
-              painter: _SweepRingPainter(progress: sweepAnim.value),
-              child: child,
-            ),
-            child: Center(
-              child: _IconWidget(svgPath: svgPath, fallbackIcon: fallbackIcon),
-            ),
+            animation: widget.controller,
+            builder: (_, __) {
+              // Dot position: starts at top (angle = -π/2), orbits full 360°
+              final dotAngle = -pi / 2 + (2 * pi * _dotAnim.value);
+              final dotX = size / 2 + ringRadius * cos(dotAngle) - dotSize / 2;
+              final dotY = size / 2 + ringRadius * sin(dotAngle) - dotSize / 2;
+
+              return Stack(
+                children: [
+                  // Ring (CustomPaint)
+                  CustomPaint(
+                    size: const Size(size, size),
+                    painter: _RingPainter(sweepProgress: _sweepAnim.value),
+                  ),
+                  // SVG icon centred
+                  Center(
+                    child: SvgPicture.asset(
+                      widget.svgPath,
+                      width: 52,
+                      height: 52,
+                      fit: BoxFit.contain,
+                      placeholderBuilder: (_) => Icon(
+                        widget.fallbackIcon,
+                        color: const Color(0xFF11A2EB),
+                        size: 28,
+                      ),
+                    ),
+                  ),
+                  // Orbiting blue dot
+                  if (_dotAnim.value > 0)
+                    Positioned(
+                      left: dotX,
+                      top: dotY,
+                      child: Container(
+                        width: dotSize,
+                        height: dotSize,
+                        decoration: const BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: Color(0xFF11A2EB),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Color(0x660796DE),
+                              blurRadius: 6,
+                              spreadRadius: 1,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                ],
+              );
+            },
           ),
         ),
         const SizedBox(height: 6),
         Text(
-          '${count.toString().padLeft(2, '0')}\n$label',
+          '${widget.count.toString().padLeft(2, '0')}\n${widget.label}',
           textAlign: TextAlign.center,
           style: const TextStyle(
             color: Color(0xFF11A2EB),
@@ -411,67 +484,47 @@ class _AnimatedSummaryPill extends StatelessWidget {
   }
 }
 
-// ── Sweep ring painter ────────────────────────────────────────────────────────
-class _SweepRingPainter extends CustomPainter {
-  final double progress;
-  _SweepRingPainter({required this.progress});
+// ── Ring painter: light-blue base + blue sweep arc ───────────────────────────
+class _RingPainter extends CustomPainter {
+  final double sweepProgress;
+  _RingPainter({required this.sweepProgress});
 
   @override
   void paint(Canvas canvas, Size size) {
     final center = Offset(size.width / 2, size.height / 2);
-    // Draw ring just outside the SVG (SVG is 56px, container is 68px → radius ~31)
-    final radius = size.width / 2 - 3;
-    const strokeWidth = 4.0;
+    final radius = size.width / 2 - 5;
+    const sw = 4.5;
 
-    // Background ring (light blue, always visible)
+    // Light-blue background ring (always full)
     canvas.drawCircle(
         center,
         radius,
         Paint()
           ..color = const Color(0xFFABE3FF)
           ..style = PaintingStyle.stroke
-          ..strokeWidth = strokeWidth);
+          ..strokeWidth = sw);
 
-    // Animated sweep arc
-    if (progress > 0) {
+    // Blue sweep arc
+    if (sweepProgress > 0) {
       canvas.drawArc(
         Rect.fromCircle(center: center, radius: radius),
         -pi / 2,
-        2 * pi * progress,
+        2 * pi * sweepProgress,
         false,
         Paint()
           ..color = const Color(0xFF11A2EB)
           ..style = PaintingStyle.stroke
-          ..strokeWidth = strokeWidth
+          ..strokeWidth = sw
           ..strokeCap = StrokeCap.round,
       );
     }
   }
 
   @override
-  bool shouldRepaint(_SweepRingPainter old) => old.progress != progress;
+  bool shouldRepaint(_RingPainter old) => old.sweepProgress != sweepProgress;
 }
 
-// ── Icon widget — SvgPicture with fallback ────────────────────────────────────
-class _IconWidget extends StatelessWidget {
-  final String svgPath;
-  final IconData fallbackIcon;
-  const _IconWidget({required this.svgPath, required this.fallbackIcon});
-
-  @override
-  Widget build(BuildContext context) {
-    return SvgPicture.asset(
-      svgPath,
-      width: 56,
-      height: 56,
-      fit: BoxFit.contain,
-      placeholderBuilder: (_) =>
-          Icon(fallbackIcon, color: const Color(0xFF11A2EB), size: 28),
-    );
-  }
-}
-
-// ── Individual medicine card ──────────────────────────────────────────────────
+// ── Medicine card ─────────────────────────────────────────────────────────────
 class _MedicineCard extends StatelessWidget {
   final Medicine medicine;
   const _MedicineCard({required this.medicine});
@@ -486,32 +539,30 @@ class _MedicineCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(12),
         boxShadow: const [
           BoxShadow(
-              color: Color(0x0F000000), blurRadius: 6, offset: Offset(0, 2)),
+              color: Color(0x0F000000), blurRadius: 6, offset: Offset(0, 2))
         ],
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(medicine.name,
-                    style: const TextStyle(
-                        color: Color(0xFF11A2EB),
-                        fontSize: 14,
-                        fontFamily: 'Poppins',
-                        fontWeight: FontWeight.w700,
-                        letterSpacing: 0.5)),
-                const SizedBox(height: 4),
-                Text(medicine.instruction,
-                    style: const TextStyle(
-                        color: Color(0xFF9F9EA5),
-                        fontSize: 12,
-                        fontFamily: 'Poppins',
-                        fontWeight: FontWeight.w500)),
-              ],
-            ),
+            child:
+                Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Text(medicine.name,
+                  style: const TextStyle(
+                      color: Color(0xFF11A2EB),
+                      fontSize: 14,
+                      fontFamily: 'Poppins',
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: 0.3)),
+              const SizedBox(height: 4),
+              Text(medicine.instruction,
+                  style: const TextStyle(
+                      color: Color(0xFF9F9EA5),
+                      fontSize: 12,
+                      fontFamily: 'Poppins',
+                      fontWeight: FontWeight.w500)),
+            ]),
           ),
           const SizedBox(width: 8),
           Text(medicine.quantity,
