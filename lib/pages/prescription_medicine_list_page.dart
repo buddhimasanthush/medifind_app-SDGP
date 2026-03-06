@@ -1,6 +1,5 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 import 'nearby_pharmacy_page.dart';
 
 // ── Data model ────────────────────────────────────────────────────────────────
@@ -100,18 +99,11 @@ class _PrescriptionMedicineListPageState
   List<Medicine> get _list => widget.medicines ?? _demoMedicines;
   int _count(MedicineType t) => _list.where((m) => m.type == t).length;
 
-  // Correct SVG filenames per user
-  static const _iconAssets = [
-    'assets/icons/Icon-3.svg', // capsules
-    'assets/icons/Icon-6.svg', // tablets
-    'assets/icons/Icon-4.svg', // syrups
-    'assets/icons/Icon copy.svg', // vitamines
-  ];
-  static const _fallbackIcons = [
-    Icons.medication_rounded,
-    Icons.tablet_rounded,
-    Icons.local_drink_rounded,
-    Icons.health_and_safety_rounded,
+  static const _pillTypes = [
+    _PillType.capsule,
+    _PillType.tablet,
+    _PillType.syrup,
+    _PillType.vitamin,
   ];
 
   @override
@@ -268,8 +260,7 @@ class _PrescriptionMedicineListPageState
                                 controller: _pillControllers[i],
                                 count: counts[i],
                                 label: labels[i],
-                                svgPath: _iconAssets[i],
-                                fallbackIcon: _fallbackIcons[i],
+                                type: _pillTypes[i],
                               )),
                     ),
                   ),
@@ -359,20 +350,21 @@ class _PrescriptionMedicineListPageState
       );
 }
 
-// ── Animated pill: ring sweeps, then orbiting dot travels full circle ─────────
+// ── Pill type enum for custom icon drawing ────────────────────────────────────
+enum _PillType { capsule, tablet, syrup, vitamin }
+
+// ── Animated pill widget ──────────────────────────────────────────────────────
 class _AnimatedSummaryPill extends StatefulWidget {
   final AnimationController controller;
   final int count;
   final String label;
-  final String svgPath;
-  final IconData fallbackIcon;
+  final _PillType type;
 
   const _AnimatedSummaryPill({
     required this.controller,
     required this.count,
     required this.label,
-    required this.svgPath,
-    required this.fallbackIcon,
+    required this.type,
   });
 
   @override
@@ -380,90 +372,33 @@ class _AnimatedSummaryPill extends StatefulWidget {
 }
 
 class _AnimatedSummaryPillState extends State<_AnimatedSummaryPill> {
-  // Phase 1 (0→0.6): ring sweeps from 0 → full circle
-  // Phase 2 (0.6→1.0): dot orbits from top → full 360° back to top
-  late final Animation<double> _sweepAnim;
-  late final Animation<double> _dotAnim;
+  late final Animation<double> _sweepAnim; // 0→1 during first 65% of anim
+  late final Animation<double> _dotAnim; // 0→1 during last 45% (orbit)
 
   @override
   void initState() {
     super.initState();
-    _sweepAnim = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(
-          parent: widget.controller,
-          curve: const Interval(0.0, 0.65, curve: Curves.easeOut)),
-    );
-    _dotAnim = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(
-          parent: widget.controller,
-          curve: const Interval(0.55, 1.0, curve: Curves.easeInOut)),
-    );
+    _sweepAnim = Tween<double>(begin: 0.0, end: 1.0).animate(CurvedAnimation(
+        parent: widget.controller,
+        curve: const Interval(0.0, 0.65, curve: Curves.easeOut)));
+    _dotAnim = Tween<double>(begin: 0.0, end: 1.0).animate(CurvedAnimation(
+        parent: widget.controller,
+        curve: const Interval(0.55, 1.0, curve: Curves.easeInOut)));
   }
 
   @override
   Widget build(BuildContext context) {
-    const size = 72.0;
-    const dotSize = 9.0;
-    const ringRadius = size / 2 - 5;
-
     return Column(
       children: [
-        SizedBox(
-          width: size,
-          height: size,
-          child: AnimatedBuilder(
-            animation: widget.controller,
-            builder: (_, __) {
-              // Dot position: starts at top (angle = -π/2), orbits full 360°
-              final dotAngle = -pi / 2 + (2 * pi * _dotAnim.value);
-              final dotX = size / 2 + ringRadius * cos(dotAngle) - dotSize / 2;
-              final dotY = size / 2 + ringRadius * sin(dotAngle) - dotSize / 2;
-
-              return Stack(
-                children: [
-                  // Ring (CustomPaint)
-                  CustomPaint(
-                    size: const Size(size, size),
-                    painter: _RingPainter(sweepProgress: _sweepAnim.value),
-                  ),
-                  // SVG icon centred
-                  Center(
-                    child: SvgPicture.asset(
-                      widget.svgPath,
-                      width: 52,
-                      height: 52,
-                      fit: BoxFit.contain,
-                      placeholderBuilder: (_) => Icon(
-                        widget.fallbackIcon,
-                        color: const Color(0xFF11A2EB),
-                        size: 28,
-                      ),
-                    ),
-                  ),
-                  // Orbiting blue dot
-                  if (_dotAnim.value > 0)
-                    Positioned(
-                      left: dotX,
-                      top: dotY,
-                      child: Container(
-                        width: dotSize,
-                        height: dotSize,
-                        decoration: const BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: Color(0xFF11A2EB),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Color(0x660796DE),
-                              blurRadius: 6,
-                              spreadRadius: 1,
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                ],
-              );
-            },
+        AnimatedBuilder(
+          animation: widget.controller,
+          builder: (_, __) => CustomPaint(
+            size: const Size(72, 72),
+            painter: _PillIconPainter(
+              type: widget.type,
+              sweepProgress: _sweepAnim.value,
+              dotProgress: _dotAnim.value,
+            ),
           ),
         ),
         const SizedBox(height: 6),
@@ -471,7 +406,7 @@ class _AnimatedSummaryPillState extends State<_AnimatedSummaryPill> {
           '${widget.count.toString().padLeft(2, '0')}\n${widget.label}',
           textAlign: TextAlign.center,
           style: const TextStyle(
-            color: Color(0xFF11A2EB),
+            color: Color(0xFF0796DE),
             fontSize: 10,
             fontFamily: 'Poppins',
             fontWeight: FontWeight.w700,
@@ -484,44 +419,249 @@ class _AnimatedSummaryPillState extends State<_AnimatedSummaryPill> {
   }
 }
 
-// ── Ring painter: light-blue base + blue sweep arc ───────────────────────────
-class _RingPainter extends CustomPainter {
-  final double sweepProgress;
-  _RingPainter({required this.sweepProgress});
+// ── Single painter: draws ring + icon + animated dot ─────────────────────────
+class _PillIconPainter extends CustomPainter {
+  final _PillType type;
+  final double sweepProgress; // 0→1: arc sweeps around ring
+  final double dotProgress; // 0→1: dot travels around ring
+
+  static const _blue = Color(0xFF0796DE);
+  static const _lightBlue = Color(0xFFABE3FF);
+  static const _white = Colors.white;
+
+  _PillIconPainter({
+    required this.type,
+    required this.sweepProgress,
+    required this.dotProgress,
+  });
 
   @override
   void paint(Canvas canvas, Size size) {
-    final center = Offset(size.width / 2, size.height / 2);
-    final radius = size.width / 2 - 5;
-    const sw = 4.5;
+    final cx = size.width / 2;
+    final cy = size.height / 2;
+    final ringR = size.width / 2 - 4; // outer ring radius
+    const ringW = 5.0;
+    const dotR = 6.0; // orbiting dot radius
 
-    // Light-blue background ring (always full)
+    // ── 1. Light-blue background ring ────────────────────────────
     canvas.drawCircle(
-        center,
-        radius,
+        Offset(cx, cy),
+        ringR,
         Paint()
           ..color = const Color(0xFFABE3FF)
           ..style = PaintingStyle.stroke
-          ..strokeWidth = sw);
+          ..strokeWidth = ringW);
 
-    // Blue sweep arc
+    // ── 2. Blue sweep arc (animates over the light ring) ─────────
     if (sweepProgress > 0) {
       canvas.drawArc(
-        Rect.fromCircle(center: center, radius: radius),
+        Rect.fromCircle(center: Offset(cx, cy), radius: ringR),
         -pi / 2,
         2 * pi * sweepProgress,
         false,
         Paint()
-          ..color = const Color(0xFF11A2EB)
+          ..color = const Color(0xFF0796DE)
           ..style = PaintingStyle.stroke
-          ..strokeWidth = sw
+          ..strokeWidth = ringW
           ..strokeCap = StrokeCap.round,
       );
     }
+
+    // Once animation finishes, revert arc back to light blue so only the ring shows
+    if (sweepProgress >= 0.99) {
+      canvas.drawCircle(
+          Offset(cx, cy),
+          ringR,
+          Paint()
+            ..color = const Color(0xFFABE3FF)
+            ..style = PaintingStyle.stroke
+            ..strokeWidth = ringW);
+    }
+
+    // ── 3. Blue filled inner circle ───────────────────────────────
+    final innerR = ringR - ringW / 2 - 4;
+    canvas.drawCircle(Offset(cx, cy), innerR, Paint()..color = _blue);
+
+    // ── 4. White icon (drawn per type) ────────────────────────────
+    switch (type) {
+      case _PillType.capsule:
+        _drawCapsuleIcon(canvas, cx, cy, innerR);
+        break;
+      case _PillType.tablet:
+        _drawTabletIcon(canvas, cx, cy, innerR);
+        break;
+      case _PillType.syrup:
+        _drawSyrupIcon(canvas, cx, cy, innerR);
+        break;
+      case _PillType.vitamin:
+        _drawVitaminIcon(canvas, cx, cy, innerR);
+        break;
+    }
+
+    // ── 5. Orbiting dot on ring ───────────────────────────────────
+    if (dotProgress > 0) {
+      final angle = -pi / 2 + (2 * pi * dotProgress);
+      final dx = cx + ringR * cos(angle);
+      final dy = cy + ringR * sin(angle);
+      // White halo
+      canvas.drawCircle(
+          Offset(dx, dy), dotR + 1.5, Paint()..color = Colors.white);
+      // Blue dot
+      canvas.drawCircle(Offset(dx, dy), dotR, Paint()..color = _blue);
+    }
+  }
+
+  // ── Capsule icon: two overlapping pills ───────────────────────
+  void _drawCapsuleIcon(Canvas canvas, double cx, double cy, double r) {
+    final p = Paint()
+      ..color = _white
+      ..style = PaintingStyle.fill;
+    final s = r * 0.38;
+    // Left pill (vertical capsule shape)
+    final rr = RRect.fromRectAndRadius(
+      Rect.fromCenter(
+          center: Offset(cx - s * 0.6, cy), width: s * 0.9, height: s * 1.8),
+      Radius.circular(s * 0.45),
+    );
+    canvas.drawRRect(rr, p);
+    // Right pill (angled)
+    canvas.save();
+    canvas.translate(cx + s * 0.5, cy);
+    canvas.rotate(0.5);
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(
+        Rect.fromCenter(center: Offset.zero, width: s * 0.85, height: s * 1.7),
+        Radius.circular(s * 0.42),
+      ),
+      p,
+    );
+    canvas.restore();
+    // Divider line on left pill
+    canvas.drawLine(
+      Offset(cx - s * 0.6 - s * 0.45, cy),
+      Offset(cx - s * 0.6 + s * 0.45, cy),
+      Paint()
+        ..color = _blue
+        ..strokeWidth = 1.5
+        ..style = PaintingStyle.stroke,
+    );
+  }
+
+  // ── Tablet icon: two round tablets side by side ───────────────
+  void _drawTabletIcon(Canvas canvas, double cx, double cy, double r) {
+    final p = Paint()
+      ..color = _white
+      ..style = PaintingStyle.fill;
+    final s = r * 0.35;
+    // Left tablet
+    canvas.drawCircle(Offset(cx - s * 0.85, cy - s * 0.1), s, p);
+    canvas.drawLine(
+      Offset(cx - s * 0.85 - s * 0.7, cy - s * 0.1),
+      Offset(cx - s * 0.85 + s * 0.7, cy - s * 0.1),
+      Paint()
+        ..color = _blue
+        ..strokeWidth = 1.5
+        ..style = PaintingStyle.stroke,
+    );
+    // Right tablet (angled)
+    canvas.save();
+    canvas.translate(cx + s * 0.7, cy + s * 0.1);
+    canvas.rotate(0.4);
+    canvas.drawOval(
+        Rect.fromCenter(center: Offset.zero, width: s * 1.5, height: s * 2.1),
+        p);
+    canvas.drawLine(
+      Offset(0, -s * 0.9),
+      Offset(0, s * 0.9),
+      Paint()
+        ..color = _blue
+        ..strokeWidth = 1.5
+        ..style = PaintingStyle.stroke,
+    );
+    canvas.restore();
+  }
+
+  // ── Syrup icon: medicine bottle ───────────────────────────────
+  void _drawSyrupIcon(Canvas canvas, double cx, double cy, double r) {
+    final p = Paint()
+      ..color = _white
+      ..style = PaintingStyle.fill;
+    final s = r * 0.28;
+    // Bottle body
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(
+        Rect.fromCenter(
+            center: Offset(cx, cy + s * 0.4), width: s * 2.4, height: s * 2.8),
+        Radius.circular(s * 0.5),
+      ),
+      p,
+    );
+    // Bottle neck
+    canvas.drawRect(
+      Rect.fromCenter(
+          center: Offset(cx, cy - s * 0.85), width: s * 1.2, height: s * 0.8),
+      p,
+    );
+    // Cap
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(
+        Rect.fromCenter(
+            center: Offset(cx, cy - s * 1.45), width: s * 1.6, height: s * 0.6),
+        Radius.circular(s * 0.2),
+      ),
+      p,
+    );
+    // Cross on bottle
+    final cp = Paint()
+      ..color = _blue
+      ..strokeWidth = 2.0
+      ..style = PaintingStyle.stroke
+      ..strokeCap = StrokeCap.round;
+    canvas.drawLine(Offset(cx, cy + s * 0.1), Offset(cx, cy + s * 1.1), cp);
+    canvas.drawLine(Offset(cx - s * 0.6, cy + s * 0.6),
+        Offset(cx + s * 0.6, cy + s * 0.6), cp);
+  }
+
+  // ── Vitamin icon: capsule + shield/circle ──────────────────────
+  void _drawVitaminIcon(Canvas canvas, double cx, double cy, double r) {
+    final p = Paint()
+      ..color = _white
+      ..style = PaintingStyle.fill;
+    final s = r * 0.35;
+    // Left: tall capsule
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(
+        Rect.fromCenter(
+            center: Offset(cx - s * 0.7, cy), width: s * 0.9, height: s * 2.0),
+        Radius.circular(s * 0.45),
+      ),
+      p,
+    );
+    canvas.drawLine(
+      Offset(cx - s * 0.7 - s * 0.45, cy),
+      Offset(cx - s * 0.7 + s * 0.45, cy),
+      Paint()
+        ..color = _blue
+        ..strokeWidth = 1.5
+        ..style = PaintingStyle.stroke,
+    );
+    // Right: circle with cross (vitamin symbol)
+    canvas.drawCircle(Offset(cx + s * 0.75, cy), s * 0.85, p);
+    final cp = Paint()
+      ..color = _blue
+      ..strokeWidth = 1.8
+      ..style = PaintingStyle.stroke
+      ..strokeCap = StrokeCap.round;
+    canvas.drawLine(Offset(cx + s * 0.75, cy - s * 0.5),
+        Offset(cx + s * 0.75, cy + s * 0.5), cp);
+    canvas.drawLine(Offset(cx + s * 0.25, cy), Offset(cx + s * 1.25, cy), cp);
   }
 
   @override
-  bool shouldRepaint(_RingPainter old) => old.sweepProgress != sweepProgress;
+  bool shouldRepaint(_PillIconPainter old) =>
+      old.sweepProgress != sweepProgress ||
+      old.dotProgress != dotProgress ||
+      old.type != type;
 }
 
 // ── Medicine card ─────────────────────────────────────────────────────────────

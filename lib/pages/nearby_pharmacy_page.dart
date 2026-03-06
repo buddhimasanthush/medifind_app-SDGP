@@ -73,6 +73,19 @@ const _pharmacies5km = [
     rating: 4.6,
     brandColor: Color(0xFF9B2AA0),
   ),
+  _Pharmacy(
+    name: 'Osusala Pharmacy',
+    location: 'Borella',
+    distance: '3.2km ahead',
+    price: 4350,
+    available: 5,
+    total: 6,
+    notAvailable: 'Lactaid',
+    accepted: 68,
+    cancelled: 3,
+    rating: 4.5,
+    brandColor: Color(0xFF1565C0),
+  ),
 ];
 
 const _pharmacies10km = [
@@ -103,9 +116,22 @@ const _pharmacies10km = [
     brandColor: Color(0xFF9B2AA0),
   ),
   _Pharmacy(
-    name: 'Health Link',
+    name: 'Osusala Pharmacy',
     location: 'Borella',
-    distance: '3km ahead',
+    distance: '3.2km ahead',
+    price: 4350,
+    available: 5,
+    total: 6,
+    notAvailable: 'Lactaid',
+    accepted: 68,
+    cancelled: 3,
+    rating: 4.5,
+    brandColor: Color(0xFF1565C0),
+  ),
+  _Pharmacy(
+    name: 'Health Link',
+    location: 'Maradana',
+    distance: '4.5km ahead',
     price: 4900,
     available: 3,
     total: 6,
@@ -113,12 +139,12 @@ const _pharmacies10km = [
     accepted: 61,
     cancelled: 5,
     rating: 4.3,
-    brandColor: Color(0xFF0796DE),
+    brandColor: Color(0xFF00897B),
   ),
   _Pharmacy(
-    name: 'HealthGuard',
+    name: 'Jeewaka Pharma',
     location: 'Wellawatte',
-    distance: '4.2km ahead',
+    distance: '5.8km ahead',
     price: 5100,
     available: 6,
     total: 6,
@@ -126,17 +152,45 @@ const _pharmacies10km = [
     accepted: 80,
     cancelled: 1,
     rating: 4.9,
-    brandColor: Color(0xFF2E7D32),
+    brandColor: Color(0xFFE53935),
+  ),
+  _Pharmacy(
+    name: 'Suncity Pharmacy',
+    location: 'Dehiwala',
+    distance: '7.1km ahead',
+    price: 4750,
+    available: 4,
+    total: 6,
+    notAvailable: 'Simethicone',
+    accepted: 65,
+    cancelled: 3,
+    rating: 4.4,
+    brandColor: Color(0xFFF57C00),
+  ),
+  _Pharmacy(
+    name: 'Ceylinco Medicare',
+    location: 'Nugegoda',
+    distance: '9.3km ahead',
+    price: 5400,
+    available: 5,
+    total: 6,
+    notAvailable: 'Lactaid',
+    accepted: 74,
+    cancelled: 2,
+    rating: 4.7,
+    brandColor: Color(0xFF6A1B9A),
   ),
 ];
 
 // ── Pharmacy marker positions (as fractions of radar area) ───────────────────
 const _markerPositions10km = [
-  Offset(0.18, 0.22), // Health Link
-  Offset(0.70, 0.30), // Union Chemists
-  Offset(0.42, 0.60), // HealthGuard
+  Offset(0.72, 0.28), // Union Chemists
+  Offset(0.55, 0.20), // Healthguard
+  Offset(0.20, 0.25), // Osusala
+  Offset(0.30, 0.55), // Health Link
+  Offset(0.78, 0.65), // Jeewaka
   Offset(0.15, 0.72), // Suncity
-  Offset(0.80, 0.78), // Jeewaka
+  Offset(0.60, 0.78), // Ceylinco
 ];
 
 // ── Main Page ─────────────────────────────────────────────────────────────────
@@ -271,7 +325,7 @@ class _NearbyPharmacyPageState extends State<NearbyPharmacyPage>
         children: [
           // ── Blue radar area ─────────────────────────────────────
           Expanded(
-            flex: 55,
+            flex: 42,
             child: Container(
               color: const Color(0xFF0796DE),
               child: SafeArea(
@@ -356,7 +410,7 @@ class _NearbyPharmacyPageState extends State<NearbyPharmacyPage>
 
           // ── White bottom sheet ──────────────────────────────────
           Expanded(
-            flex: 45,
+            flex: 58,
             child: Container(
               decoration: const BoxDecoration(
                 color: Color(0xFFFAFAFA),
@@ -505,11 +559,15 @@ class _NearbyPharmacyPageState extends State<NearbyPharmacyPage>
             _buildSelectedCard(_selected!)
           else
             Expanded(
-              child: ListView.separated(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                scrollDirection: Axis.horizontal,
+              child: GridView.builder(
+                padding: const EdgeInsets.fromLTRB(16, 4, 16, 16),
+                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 2,
+                  crossAxisSpacing: 12,
+                  mainAxisSpacing: 12,
+                  childAspectRatio: 0.82,
+                ),
                 itemCount: pharmacies.length,
-                separatorBuilder: (_, __) => const SizedBox(width: 12),
                 itemBuilder: (_, i) => _buildPharmacyCard(pharmacies[i]),
               ),
             ),
@@ -663,67 +721,88 @@ class _NearbyPharmacyPageState extends State<NearbyPharmacyPage>
     return GestureDetector(
       onTap: () => setState(() => _selected = p),
       child: Container(
-        width: 180,
         decoration: BoxDecoration(
           color: Colors.white,
-          borderRadius: BorderRadius.circular(14),
+          borderRadius: BorderRadius.circular(16),
           boxShadow: const [
             BoxShadow(
-                color: Color(0x12000000), blurRadius: 8, offset: Offset(0, 2))
+                color: Color(0x14000000), blurRadius: 10, offset: Offset(0, 3))
           ],
         ),
-        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Container(
-            height: 90,
-            width: double.infinity,
-            decoration: BoxDecoration(
-              color: p.brandColor,
-              borderRadius: const BorderRadius.only(
-                  topLeft: Radius.circular(14), topRight: Radius.circular(14)),
-            ),
-            child: Center(
-                child: Text(p.name[0],
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Large brand color banner — takes ~55% of card height
+            Expanded(
+              flex: 55,
+              child: Container(
+                width: double.infinity,
+                decoration: BoxDecoration(
+                  color: p.brandColor,
+                  borderRadius: const BorderRadius.only(
+                    topLeft: Radius.circular(16),
+                    topRight: Radius.circular(16),
+                  ),
+                ),
+                child: Center(
+                  child: Text(
+                    p.name[0],
                     style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 40,
-                        fontWeight: FontWeight.bold))),
-          ),
-          Padding(
-            padding: const EdgeInsets.all(10),
-            child:
-                Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Row(children: [
-                CircleAvatar(
-                    radius: 10,
-                    backgroundColor: p.brandColor,
-                    child: Text(p.name[0],
+                      color: Colors.white,
+                      fontSize: 52,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            // Info section
+            Expanded(
+              flex: 45,
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(10, 8, 10, 10),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Row(children: [
+                      CircleAvatar(
+                        radius: 11,
+                        backgroundColor: p.brandColor,
+                        child: Text(p.name[0],
+                            style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 11,
+                                fontWeight: FontWeight.bold)),
+                      ),
+                      const SizedBox(width: 6),
+                      Expanded(
+                        child: Text(p.name,
+                            style: const TextStyle(
+                                color: Color(0xFF2D2D2D),
+                                fontSize: 12,
+                                fontFamily: 'Poppins',
+                                fontWeight: FontWeight.w700),
+                            overflow: TextOverflow.ellipsis),
+                      ),
+                    ]),
+                    Text(p.distance,
                         style: const TextStyle(
-                            color: Colors.white, fontSize: 10))),
-                const SizedBox(width: 6),
-                Expanded(
-                    child: Text(p.name,
-                        style: const TextStyle(
-                            color: Color(0xFF2D2D2D),
+                            color: Color(0xFF697282),
                             fontSize: 12,
+                            fontFamily: 'Poppins')),
+                    Text('RS.${p.price.toStringAsFixed(0)}',
+                        style: const TextStyle(
+                            color: Color(0xFF0796DE),
+                            fontSize: 16,
                             fontFamily: 'Poppins',
-                            fontWeight: FontWeight.w600),
-                        overflow: TextOverflow.ellipsis)),
-              ]),
-              const SizedBox(height: 4),
-              Text(p.distance,
-                  style: const TextStyle(
-                      color: Color(0xFF697282),
-                      fontSize: 11,
-                      fontFamily: 'Poppins')),
-              Text('RS.${p.price.toStringAsFixed(0)}',
-                  style: const TextStyle(
-                      color: Color(0xFF0796DE),
-                      fontSize: 15,
-                      fontFamily: 'Poppins',
-                      fontWeight: FontWeight.w700)),
-            ]),
-          ),
-        ]),
+                            fontWeight: FontWeight.w800)),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -778,20 +857,20 @@ class _RadarWidget extends StatelessWidget {
               final x = pos.dx * size.width;
               final y = pos.dy * size.height;
               return Positioned(
-                left: x - 24,
-                top: y - 40,
+                left: x - 30,
+                top: y - 52,
                 child: GestureDetector(
                   onTap: () => onMarkerTap(i),
                   child: Column(children: [
-                    const Icon(Icons.add, color: Colors.white70, size: 28),
+                    const Icon(Icons.add, color: Colors.white, size: 44),
                     Text(pharmacyNames[i],
                         style: const TextStyle(
                             color: Colors.white,
-                            fontSize: 9,
+                            fontSize: 10,
                             fontFamily: 'Poppins',
-                            fontWeight: FontWeight.w500,
+                            fontWeight: FontWeight.w600,
                             shadows: [
-                              Shadow(color: Colors.black38, blurRadius: 4)
+                              Shadow(color: Colors.black45, blurRadius: 6)
                             ])),
                   ]),
                 ),
