@@ -1,15 +1,17 @@
 import 'package:flutter/material.dart';
+import 'dart:math' as math;
 import '../widgets/medicine_form_carousel.dart';
 import '../widgets/services_carousel.dart';
 import '../widgets/pharmacy_card.dart';
 import 'cart_page.dart';
 import 'location_selector_page.dart';
 import 'previous_orders_page.dart';
+import 'medicine_form_page.dart';
 import 'all_services_page.dart';
 import 'pharmacy_list_page.dart';
+import 'reminder_page.dart';
+import 'health_profile_page.dart';
 
-// This is the standalone HomePage - used when navigating FROM other pages
-// It includes the bottom navigation bar
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
 
@@ -28,12 +30,12 @@ class _HomePageState extends State<HomePage> {
         children: [
           // Background with decorative circles
           _buildBackground(),
-          
+
           // Main scrollable content
           _buildMainContent(),
         ],
       ),
-      // This bottom nav bar is only shown when coming from other pages
+      // Bottom Navigation Bar
       bottomNavigationBar: _buildBottomNavigationBar(),
     );
   }
@@ -170,7 +172,7 @@ class _HomePageState extends State<HomePage> {
           // Header Section
           _buildHeader(),
           const SizedBox(height: 20),
-          
+
           // White content card
           Expanded(
             child: Container(
@@ -191,7 +193,7 @@ class _HomePageState extends State<HomePage> {
                       // Search Bar
                       _buildSearchBar(),
                       const SizedBox(height: 35),
-                      
+
                       // Recent Purchases Section
                       _buildSectionHeader('Recent perchances', onViewAll: () {
                         Navigator.push(
@@ -204,7 +206,7 @@ class _HomePageState extends State<HomePage> {
                       const SizedBox(height: 20),
                       const MedicineFormCarousel(),
                       const SizedBox(height: 30),
-                      
+
                       // More Services Section
                       _buildSectionHeader('More Services', onViewAll: () {
                         Navigator.push(
@@ -217,7 +219,7 @@ class _HomePageState extends State<HomePage> {
                       const SizedBox(height: 20),
                       const ServicesCarousel(),
                       const SizedBox(height: 30),
-                      
+
                       // Pharmacies Near You Section
                       _buildSectionHeader('Phamacies Near You', onViewAll: () {
                         Navigator.push(
@@ -386,6 +388,7 @@ class _HomePageState extends State<HomePage> {
           contentPadding: EdgeInsets.symmetric(horizontal: 20, vertical: 15),
         ),
         onSubmitted: (value) {
+          // Handle search
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text('Searching for: $value')),
           );
@@ -429,23 +432,21 @@ class _HomePageState extends State<HomePage> {
       children: [
         Expanded(
           child: PharmacyCard(
-            name: 'Healthy Clinic ABC',
+            name: 'Asiri Hospital',
             distance: '2.5 km',
             rating: 4.5,
-            onTap: () {
-              // Navigate to pharmacy details
-            },
+            brandColor: const Color(0xFF9B2AA0),
+            onTap: () {},
           ),
         ),
-        const SizedBox(width: 20),
+        const SizedBox(width: 16),
         Expanded(
           child: PharmacyCard(
-            name: 'Fauget Clinic 24',
+            name: 'Union Chemists',
             distance: '3.8 km',
             rating: 4.7,
-            onTap: () {
-              // Navigate to pharmacy details
-            },
+            brandColor: const Color(0xFFD4A017),
+            onTap: () {},
           ),
         ),
       ],
@@ -541,6 +542,3 @@ class _HomePageState extends State<HomePage> {
     );
   }
 }
-
-import 'reminder_page.dart';
-import 'health_profile_page.dart';

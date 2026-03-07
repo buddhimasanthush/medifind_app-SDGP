@@ -21,6 +21,9 @@ dependencies:
   # SVG support
   flutter_svg: ^2.0.10+1
 
+  # Permissions
+  permission_handler: ^11.3.1
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
@@ -34,6 +37,7 @@ flutter:
   assets:
     - assets/icons/
     - assets/images/
+    - assets/images/Medifind logo with white letterings.png
 
   fonts:
     - family: Poppins

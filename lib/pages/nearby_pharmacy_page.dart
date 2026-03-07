@@ -1,10 +1,8 @@
+import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Custom map style — clean blue/white like the Freepik reference
-// Roads: white on light-blue canvas, water: brand blue, all clutter hidden
-// ─────────────────────────────────────────────────────────────────────────────
+// ── Custom blue/white map style ───────────────────────────────────────────────
 const _mapStyle = '''
 [
   { "elementType": "geometry", "stylers": [{ "color": "#daeeff" }] },
@@ -26,7 +24,7 @@ const _mapStyle = '''
 ]
 ''';
 
-// ── Demo pharmacy data ────────────────────────────────────────────────────────
+// ── Pharmacy data ─────────────────────────────────────────────────────────────
 class _Pharmacy {
   final String name;
   final String location;
@@ -72,7 +70,6 @@ const _pharmacies1km = [
       brandColor: Color(0xFFD4A017),
       latLng: LatLng(6.8980, 79.8780)),
 ];
-
 const _pharmacies5km = [
   _Pharmacy(
       name: 'Union Chemists',
@@ -114,7 +111,6 @@ const _pharmacies5km = [
       brandColor: Color(0xFF1565C0),
       latLng: LatLng(6.9180, 79.8760)),
 ];
-
 const _pharmacies10km = [
   _Pharmacy(
       name: 'Union Chemists',
@@ -209,6 +205,25 @@ const _pharmacies10km = [
       latLng: LatLng(6.8740, 79.9000)),
 ];
 
+// Saved delivery addresses
+const _savedAddresses = [
+  {
+    'label': 'My Home',
+    'icon': Icons.home_rounded,
+    'address': 'No. 12, Wijerama Rd, Nugegoda'
+  },
+  {
+    'label': 'Office',
+    'icon': Icons.business_rounded,
+    'address': 'Level 4, BOC Tower, Colombo 01'
+  },
+  {
+    'label': 'Mum\'s Place',
+    'icon': Icons.favorite_rounded,
+    'address': 'No. 5, Galle Rd, Dehiwala'
+  },
+];
+
 // ── Page ──────────────────────────────────────────────────────────────────────
 class NearbyPharmacyPage extends StatefulWidget {
   const NearbyPharmacyPage({super.key});
@@ -222,13 +237,16 @@ class _NearbyPharmacyPageState extends State<NearbyPharmacyPage>
   bool _scanning = true;
   bool _showMarkers = false;
   _Pharmacy? _selected;
+  String _deliveryLabel = 'My Home';
 
   GoogleMapController? _mapController;
 
-  // Narahenpita, Colombo — replace with real GPS in production
   static const _userPos = LatLng(6.8935, 79.8780);
   static const _zoomLevels = [15.5, 13.5, 12.0];
+  static const _radiusMetres = [1000.0, 5000.0, 10000.0];
+  static const _stageLabels = ['1km', '5km', '10km'];
 
+  // ── Animations ───────────────────────────────────────────────────────────
   late AnimationController _breatheCtrl;
   late Animation<double> _breatheAnim;
   late AnimationController _labelCtrl;
@@ -236,79 +254,56 @@ class _NearbyPharmacyPageState extends State<NearbyPharmacyPage>
   String _currentLabel = '1km';
   String _nextLabel = '1km';
 
-  static const _stageLabels = ['1km', '5km', '10km'];
-
-  // Scan radius in metres per stage
-  static const _radiusMetres = [1000.0, 5000.0, 10000.0];
-
+  // ── Map circles (real geo radius — static, no animation needed) ──────────
   Set<Circle> _buildCircles() {
     final r = _radiusMetres[_stage];
     return {
-      // Outermost ring — solid border, the main radius indicator
       Circle(
-        circleId: const CircleId('ring_outer'),
-        center: _userPos,
-        radius: r,
-        strokeColor: Colors.white.withOpacity(0.90),
-        strokeWidth: 2,
-        fillColor: Colors.white.withOpacity(0.04),
-      ),
-      // 3 inner rings — progressively more subtle
+          circleId: const CircleId('r4'),
+          center: _userPos,
+          radius: r,
+          strokeColor: const Color(0xFF0796DE).withOpacity(0.5),
+          strokeWidth: 2,
+          fillColor: Colors.transparent),
       Circle(
-        circleId: const CircleId('ring_3'),
-        center: _userPos,
-        radius: r * 0.75,
-        strokeColor: Colors.white.withOpacity(0.55),
-        strokeWidth: 1,
-        fillColor: Colors.white.withOpacity(0.04),
-      ),
+          circleId: const CircleId('r3'),
+          center: _userPos,
+          radius: r * 0.75,
+          strokeColor: const Color(0xFF0796DE).withOpacity(0.35),
+          strokeWidth: 1,
+          fillColor: Colors.transparent),
       Circle(
-        circleId: const CircleId('ring_2'),
-        center: _userPos,
-        radius: r * 0.50,
-        strokeColor: Colors.white.withOpacity(0.40),
-        strokeWidth: 1,
-        fillColor: Colors.white.withOpacity(0.05),
-      ),
+          circleId: const CircleId('r2'),
+          center: _userPos,
+          radius: r * 0.50,
+          strokeColor: const Color(0xFF0796DE).withOpacity(0.25),
+          strokeWidth: 1,
+          fillColor: Colors.transparent),
       Circle(
-        circleId: const CircleId('ring_1'),
-        center: _userPos,
-        radius: r * 0.25,
-        strokeColor: Colors.white.withOpacity(0.28),
-        strokeWidth: 1,
-        fillColor: Colors.white.withOpacity(0.06),
-      ),
+          circleId: const CircleId('r1'),
+          center: _userPos,
+          radius: r * 0.25,
+          strokeColor: const Color(0xFF0796DE).withOpacity(0.18),
+          strokeWidth: 1,
+          fillColor: Colors.transparent),
     };
   }
 
-  Set<Marker> _buildMarkers() {
-    if (!_showMarkers) return {};
-    return _pharmacies10km
-        .map((p) => Marker(
-              markerId: MarkerId(p.name),
-              position: p.latLng,
-              icon: BitmapDescriptor.defaultMarkerWithHue(
-                  BitmapDescriptor.hueAzure),
-              infoWindow: InfoWindow(
-                  title: p.name,
-                  snippet: '${p.distance} · RS.${p.price.toStringAsFixed(0)}'),
-              onTap: () => setState(() => _selected = p),
-            ))
-        .toSet();
-  }
+  // ── Markers — hidden during scan; shown as cross+name after ─────────────
+  Set<Marker> _buildMarkers() => {};
+  // Custom Flutter cross markers are drawn via Stack overlay (see _buildMapOverlay)
 
   @override
   void initState() {
     super.initState();
-
     _breatheCtrl = AnimationController(
         vsync: this, duration: const Duration(milliseconds: 1600))
       ..repeat(reverse: true);
-    _breatheAnim = Tween<double>(begin: 0.93, end: 1.07).animate(
+    _breatheAnim = Tween<double>(begin: 0.88, end: 1.12).animate(
         CurvedAnimation(parent: _breatheCtrl, curve: Curves.easeInOut));
 
     _labelCtrl = AnimationController(
-        vsync: this, duration: const Duration(milliseconds: 600));
+        vsync: this, duration: const Duration(milliseconds: 500));
     _labelAnim = Tween<double>(begin: 0.0, end: 1.0)
         .animate(CurvedAnimation(parent: _labelCtrl, curve: Curves.easeInOut));
 
@@ -333,15 +328,8 @@ class _NearbyPharmacyPageState extends State<NearbyPharmacyPage>
       _stage = next;
     });
     _currentLabel = _stageLabels[next - 1];
-
-    // Smooth zoom out
-    _mapController?.animateCamera(
-      CameraUpdate.newCameraPosition(
-        CameraPosition(target: _userPos, zoom: _zoomLevels[next]),
-      ),
-    );
-
-    // Label morph
+    _mapController?.animateCamera(CameraUpdate.newCameraPosition(
+        CameraPosition(target: _userPos, zoom: _zoomLevels[next])));
     _labelCtrl.forward(from: 0).then((_) {
       setState(() => _currentLabel = _nextLabel);
       _labelCtrl.reset();
@@ -353,7 +341,6 @@ class _NearbyPharmacyPageState extends State<NearbyPharmacyPage>
       _scanning = false;
       _showMarkers = true;
     });
-    // Keep breathing animation going on results screen
   }
 
   @override
@@ -362,6 +349,19 @@ class _NearbyPharmacyPageState extends State<NearbyPharmacyPage>
     _labelCtrl.dispose();
     _mapController?.dispose();
     super.dispose();
+  }
+
+  // ── Location picker bottom sheet ─────────────────────────────────────────
+  void _showLocationPicker() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => _LocationPickerSheet(
+        currentLabel: _deliveryLabel,
+        onSelect: (label) => setState(() => _deliveryLabel = label),
+      ),
+    );
   }
 
   List<_Pharmacy> get _currentPharmacies => _stage == 0
@@ -373,159 +373,252 @@ class _NearbyPharmacyPageState extends State<NearbyPharmacyPage>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Column(
-        children: [
-          // ── Google Map area ───────────────────────────────────────
-          Expanded(
-            flex: 45,
-            child: Stack(
-              children: [
-                // Google Map — 2D normal view with custom blue style
-                GoogleMap(
-                  onMapCreated: (ctrl) {
-                    _mapController = ctrl;
-                    ctrl.setMapStyle(_mapStyle);
-                  },
-                  initialCameraPosition: const CameraPosition(
-                    target: _userPos,
-                    zoom: 15.5,
-                  ),
-                  mapType: MapType.normal,
-                  myLocationEnabled: false,
-                  zoomControlsEnabled: false,
-                  compassEnabled: false,
-                  mapToolbarEnabled: false,
-                  rotateGesturesEnabled: false,
-                  scrollGesturesEnabled: false,
-                  zoomGesturesEnabled: false,
-                  tiltGesturesEnabled: false,
-                  markers: _buildMarkers(),
-                  circles: _buildCircles(),
-                ),
+      body: Column(children: [
+        // ── Map area ────────────────────────────────────────────────
+        Expanded(
+          flex: 45,
+          child: Stack(children: [
+            // Google Map base
+            GoogleMap(
+              onMapCreated: (ctrl) {
+                _mapController = ctrl;
+                ctrl.setMapStyle(_mapStyle);
+              },
+              initialCameraPosition:
+                  const CameraPosition(target: _userPos, zoom: 15.5),
+              mapType: MapType.normal,
+              myLocationEnabled: false,
+              zoomControlsEnabled: false,
+              compassEnabled: false,
+              mapToolbarEnabled: false,
+              rotateGesturesEnabled: false,
+              scrollGesturesEnabled: false,
+              zoomGesturesEnabled: false,
+              tiltGesturesEnabled: false,
+              markers: _buildMarkers(),
+              circles: _buildCircles(),
+            ),
 
-                // Top gradient — solid at top so title is always readable
-                Positioned(
-                  top: 0,
-                  left: 0,
-                  right: 0,
-                  height: 160,
-                  child: Container(
-                    decoration: const BoxDecoration(
-                      gradient: LinearGradient(
-                        begin: Alignment.topCenter,
-                        end: Alignment.bottomCenter,
-                        colors: [Color(0xFF0796DE), Color(0x000796DE)],
-                        stops: [0.50, 1.0],
+            // ── Breathing rings overlay (Flutter-animated, always visible) ──
+            Positioned.fill(
+              child: IgnorePointer(
+                child: AnimatedBuilder(
+                  animation: _breatheAnim,
+                  builder: (_, __) => CustomPaint(
+                    painter: _RingsPainter(scale: _breatheAnim.value),
+                  ),
+                ),
+              ),
+            ),
+
+            // ── Cross pharmacy markers overlay (after scan) ─────────────────
+            if (_showMarkers)
+              Positioned.fill(child: _buildPharmacyMarkerOverlay()),
+
+            // Top gradient
+            Positioned(
+              top: 0,
+              left: 0,
+              right: 0,
+              height: 150,
+              child: Container(
+                decoration: const BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [Color(0xFF0796DE), Color(0x000796DE)],
+                    stops: [0.55, 1.0],
+                  ),
+                ),
+              ),
+            ),
+
+            // Top bar
+            SafeArea(
+              bottom: false,
+              child: Align(
+                alignment: Alignment.topCenter,
+                child: Padding(
+                  padding: const EdgeInsets.only(top: 10),
+                  child: Column(mainAxisSize: MainAxisSize.min, children: [
+                    Text(
+                      _scanning
+                          ? 'Searching nearby\nPhamacies'
+                          : 'Nearby\nPhamacies',
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 18,
+                        fontFamily: 'Poppins',
+                        fontWeight: FontWeight.w700,
+                        height: 1.3,
                       ),
                     ),
-                  ),
-                ),
-
-                // Top bar — title only, no back/gps buttons
-                SafeArea(
-                  bottom: false,
-                  child: Align(
-                    alignment: Alignment.topCenter,
-                    child: Padding(
-                      padding: const EdgeInsets.only(top: 10),
-                      child: Column(mainAxisSize: MainAxisSize.min, children: [
-                        Text(
-                          _scanning
-                              ? 'Searching nearby\nPhamacies'
-                              : 'Nearby\nPhamacies',
-                          textAlign: TextAlign.center,
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 18,
-                            fontFamily: 'Poppins',
-                            fontWeight: FontWeight.w700,
-                            height: 1.3,
-                          ),
+                    const SizedBox(height: 5),
+                    // ── Tappable delivery location ──
+                    GestureDetector(
+                      onTap: _showLocationPicker,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 12, vertical: 5),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.18),
+                          borderRadius: BorderRadius.circular(20),
                         ),
-                        const SizedBox(height: 4),
-                        Row(mainAxisSize: MainAxisSize.min, children: [
+                        child: Row(mainAxisSize: MainAxisSize.min, children: [
                           const Icon(Icons.location_on,
                               color: Colors.white, size: 13),
+                          const SizedBox(width: 3),
                           const Text('Send to ',
                               style: TextStyle(
                                   color: Colors.white70,
                                   fontSize: 11,
                                   fontFamily: 'Poppins')),
-                          const Text('My Home',
-                              style: TextStyle(
+                          Text(_deliveryLabel,
+                              style: const TextStyle(
                                   color: Colors.white,
                                   fontSize: 11,
                                   fontFamily: 'Poppins',
-                                  fontWeight: FontWeight.w600)),
+                                  fontWeight: FontWeight.w700)),
+                          const SizedBox(width: 2),
                           const Icon(Icons.keyboard_arrow_down,
                               color: Colors.white, size: 15),
                         ]),
-                      ]),
-                    ),
-                  ),
-                ),
-
-                // User location dot (centre, breathing)
-                Center(
-                  child: AnimatedBuilder(
-                    animation: _breatheAnim,
-                    builder: (_, __) => Transform.scale(
-                      scale: _breatheAnim.value,
-                      child: Container(
-                        width: 18,
-                        height: 18,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: Colors.white,
-                          border: Border.all(
-                              color: const Color(0xFF0796DE), width: 3),
-                          boxShadow: [
-                            BoxShadow(
-                              color: const Color(0xFF0796DE).withOpacity(0.55),
-                              blurRadius: 14,
-                              spreadRadius: 5,
-                            )
-                          ],
-                        ),
                       ),
                     ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-
-          // ── White bottom sheet ────────────────────────────────────
-          Expanded(
-            flex: 55,
-            child: Container(
-              decoration: const BoxDecoration(
-                color: Color(0xFFFAFAFA),
-                borderRadius: BorderRadius.only(
-                  topLeft: Radius.circular(25),
-                  topRight: Radius.circular(25),
+                  ]),
                 ),
               ),
-              child: Column(children: [
-                Center(
-                    child: Container(
-                  margin: const EdgeInsets.only(top: 14, bottom: 8),
-                  width: 36,
-                  height: 5,
-                  decoration: BoxDecoration(
-                      color: const Color(0xFFDDDDDD),
-                      borderRadius: BorderRadius.circular(3)),
-                )),
-                if (_scanning) _buildScanningState() else _buildResultsState(),
-              ]),
             ),
+
+            // User centre dot
+            Center(
+              child: AnimatedBuilder(
+                animation: _breatheAnim,
+                builder: (_, __) => Transform.scale(
+                  scale: _breatheAnim.value,
+                  child: Container(
+                    width: 16,
+                    height: 16,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: Colors.white,
+                      border:
+                          Border.all(color: const Color(0xFF0796DE), width: 3),
+                      boxShadow: [
+                        BoxShadow(
+                            color: const Color(0xFF0796DE).withOpacity(0.6),
+                            blurRadius: 14,
+                            spreadRadius: 5)
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ]),
+        ),
+
+        // ── Bottom sheet ────────────────────────────────────────────
+        Expanded(
+          flex: 55,
+          child: Container(
+            decoration: const BoxDecoration(
+              color: Color(0xFFFAFAFA),
+              borderRadius: BorderRadius.only(
+                  topLeft: Radius.circular(25), topRight: Radius.circular(25)),
+            ),
+            child: Column(children: [
+              Center(
+                  child: Container(
+                margin: const EdgeInsets.only(top: 14, bottom: 8),
+                width: 36,
+                height: 5,
+                decoration: BoxDecoration(
+                    color: const Color(0xFFDDDDDD),
+                    borderRadius: BorderRadius.circular(3)),
+              )),
+              if (_scanning) _buildScanningState() else _buildResultsState(),
+            ]),
           ),
-        ],
-      ),
+        ),
+      ]),
     );
   }
 
-  // ── Scanning bottom state ─────────────────────────────────────────────────
+  // ── Cross markers overlay on map ──────────────────────────────────────────
+  Widget _buildPharmacyMarkerOverlay() {
+    return LayoutBuilder(builder: (_, constraints) {
+      final w = constraints.maxWidth;
+      final h = constraints.maxHeight;
+
+      // Approximate screen positions for Colombo area at zoom 12
+      // These are relative to map centre — backend will replace with real projection
+      final positions = [
+        Offset(w * 0.52, h * 0.42), // Union Chemists
+        Offset(w * 0.56, h * 0.36), // Healthguard
+        Offset(w * 0.50, h * 0.28), // Osusala
+        Offset(w * 0.48, h * 0.22), // Health Link
+        Offset(w * 0.44, h * 0.55), // Jeewaka
+        Offset(w * 0.42, h * 0.68), // Suncity
+        Offset(w * 0.65, h * 0.50), // Ceylinco
+      ];
+
+      return Stack(
+          children:
+              List.generate(min(positions.length, _pharmacies10km.length), (i) {
+        final p = _pharmacies10km[i];
+        final pos = positions[i];
+        return Positioned(
+          left: pos.dx - 28,
+          top: pos.dy - 50,
+          child: GestureDetector(
+            onTap: () => setState(() => _selected = p),
+            child: Column(mainAxisSize: MainAxisSize.min, children: [
+              // White circle with blue cross
+              Container(
+                width: 36,
+                height: 36,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: Colors.white,
+                  boxShadow: [
+                    BoxShadow(
+                        color: Colors.black.withOpacity(0.20),
+                        blurRadius: 8,
+                        offset: const Offset(0, 2))
+                  ],
+                ),
+                child:
+                    const Icon(Icons.add, color: Color(0xFF0796DE), size: 24),
+              ),
+              const SizedBox(height: 3),
+              // Name pill
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(8),
+                  boxShadow: [
+                    BoxShadow(
+                        color: Colors.black.withOpacity(0.12), blurRadius: 4)
+                  ],
+                ),
+                child: Text(p.name,
+                    style: const TextStyle(
+                        color: Color(0xFF0796DE),
+                        fontSize: 9,
+                        fontFamily: 'Poppins',
+                        fontWeight: FontWeight.w700)),
+              ),
+            ]),
+          ),
+        );
+      }));
+    });
+  }
+
+  // ── Scanning bottom content ───────────────────────────────────────────────
   Widget _buildScanningState() => Expanded(
         child: Center(
             child: Column(
@@ -588,7 +681,7 @@ class _NearbyPharmacyPageState extends State<NearbyPharmacyPage>
         )),
       );
 
-  // ── Results bottom state ──────────────────────────────────────────────────
+  // ── Results bottom content ────────────────────────────────────────────────
   Widget _buildResultsState() {
     final pharmacies = _currentPharmacies;
     return Expanded(
@@ -690,12 +783,6 @@ class _NearbyPharmacyPageState extends State<NearbyPharmacyPage>
                               fontSize: 12,
                               fontFamily: 'Poppins',
                               fontWeight: FontWeight.w500)),
-                      Text('${((p.available / p.total) * 100).round()}%+',
-                          style: const TextStyle(
-                              color: Color(0xFF0796DE),
-                              fontSize: 11,
-                              fontFamily: 'Poppins',
-                              fontWeight: FontWeight.w600)),
                     ])),
               Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
                 const Text('Total',
@@ -783,8 +870,7 @@ class _NearbyPharmacyPageState extends State<NearbyPharmacyPage>
                   offset: Offset(0, 3))
             ],
           ),
-          child:
-              Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          child: Column(children: [
             Expanded(
                 flex: 55,
                 child: Container(
@@ -845,4 +931,243 @@ class _NearbyPharmacyPageState extends State<NearbyPharmacyPage>
           ]),
         ),
       );
+}
+
+// ── Location picker bottom sheet ──────────────────────────────────────────────
+class _LocationPickerSheet extends StatefulWidget {
+  final String currentLabel;
+  final void Function(String) onSelect;
+  const _LocationPickerSheet(
+      {required this.currentLabel, required this.onSelect});
+
+  @override
+  State<_LocationPickerSheet> createState() => _LocationPickerSheetState();
+}
+
+class _LocationPickerSheetState extends State<_LocationPickerSheet> {
+  late String _selected;
+  final _searchCtrl = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    _selected = widget.currentLabel;
+  }
+
+  @override
+  void dispose() {
+    _searchCtrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.only(
+            topLeft: Radius.circular(24), topRight: Radius.circular(24)),
+      ),
+      padding:
+          EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
+      child: Column(mainAxisSize: MainAxisSize.min, children: [
+        // Handle
+        Container(
+            margin: const EdgeInsets.only(top: 12, bottom: 16),
+            width: 36,
+            height: 4,
+            decoration: BoxDecoration(
+                color: const Color(0xFFDDDDDD),
+                borderRadius: BorderRadius.circular(2))),
+
+        // Title
+        const Padding(
+          padding: EdgeInsets.symmetric(horizontal: 20),
+          child: Align(
+            alignment: Alignment.centerLeft,
+            child: Text('Deliver to',
+                style: TextStyle(
+                    color: Color(0xFF1A1A2E),
+                    fontSize: 18,
+                    fontFamily: 'Poppins',
+                    fontWeight: FontWeight.w700)),
+          ),
+        ),
+        const SizedBox(height: 14),
+
+        // Search bar
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 20),
+          child: Container(
+            decoration: BoxDecoration(
+                color: const Color(0xFFF0F4F8),
+                borderRadius: BorderRadius.circular(12)),
+            child: TextField(
+              controller: _searchCtrl,
+              style: const TextStyle(fontSize: 13, fontFamily: 'Poppins'),
+              decoration: InputDecoration(
+                hintText: 'Search or enter a new address...',
+                hintStyle: TextStyle(
+                    color: Colors.grey.shade400,
+                    fontSize: 13,
+                    fontFamily: 'Poppins'),
+                prefixIcon: const Icon(Icons.search,
+                    color: Color(0xFF0796DE), size: 20),
+                border: InputBorder.none,
+                contentPadding: const EdgeInsets.symmetric(vertical: 13),
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(height: 18),
+
+        // Saved addresses
+        const Padding(
+          padding: EdgeInsets.only(left: 20, bottom: 8),
+          child: Align(
+              alignment: Alignment.centerLeft,
+              child: Text('Saved addresses',
+                  style: TextStyle(
+                      color: Color(0xFF9F9EA5),
+                      fontSize: 12,
+                      fontFamily: 'Poppins',
+                      fontWeight: FontWeight.w600))),
+        ),
+
+        ...(_savedAddresses).map((addr) {
+          final label = addr['label'] as String;
+          final icon = addr['icon'] as IconData;
+          final address = addr['address'] as String;
+          final isSelected = _selected == label;
+          return GestureDetector(
+            onTap: () {
+              setState(() => _selected = label);
+              widget.onSelect(label);
+              Navigator.pop(context);
+            },
+            child: Container(
+              margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+              decoration: BoxDecoration(
+                color: isSelected
+                    ? const Color(0xFF0796DE).withOpacity(0.08)
+                    : Colors.white,
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(
+                    color: isSelected
+                        ? const Color(0xFF0796DE)
+                        : const Color(0xFFEEEEEE),
+                    width: isSelected ? 1.5 : 1),
+              ),
+              child: Row(children: [
+                Container(
+                  width: 40,
+                  height: 40,
+                  decoration: BoxDecoration(
+                      color: isSelected
+                          ? const Color(0xFF0796DE)
+                          : const Color(0xFFF0F4F8),
+                      borderRadius: BorderRadius.circular(10)),
+                  child: Icon(icon,
+                      color:
+                          isSelected ? Colors.white : const Color(0xFF0796DE),
+                      size: 20),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                    child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                      Text(label,
+                          style: TextStyle(
+                              color: isSelected
+                                  ? const Color(0xFF0796DE)
+                                  : const Color(0xFF1A1A2E),
+                              fontSize: 14,
+                              fontFamily: 'Poppins',
+                              fontWeight: FontWeight.w600)),
+                      Text(address,
+                          style: const TextStyle(
+                              color: Color(0xFF9F9EA5),
+                              fontSize: 11,
+                              fontFamily: 'Poppins')),
+                    ])),
+                if (isSelected)
+                  const Icon(Icons.check_circle,
+                      color: Color(0xFF0796DE), size: 20),
+              ]),
+            ),
+          );
+        }),
+
+        // Add new address button
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
+          child: GestureDetector(
+            onTap: () => Navigator.pop(context),
+            child: Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(vertical: 14),
+              decoration: BoxDecoration(
+                  border:
+                      Border.all(color: const Color(0xFF0796DE), width: 1.5),
+                  borderRadius: BorderRadius.circular(14)),
+              child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: const [
+                    Icon(Icons.add_location_alt_outlined,
+                        color: Color(0xFF0796DE), size: 18),
+                    SizedBox(width: 8),
+                    Text('Add a new address',
+                        style: TextStyle(
+                            color: Color(0xFF0796DE),
+                            fontSize: 14,
+                            fontFamily: 'Poppins',
+                            fontWeight: FontWeight.w600)),
+                  ]),
+            ),
+          ),
+        ),
+      ]),
+    );
+  }
+}
+
+// ── Breathing rings painter ───────────────────────────────────────────────────
+class _RingsPainter extends CustomPainter {
+  final double scale;
+  _RingsPainter({required this.scale});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final cx = size.width / 2;
+    final cy = size.height / 2;
+    final maxR = min(cx, cy) * 0.80 * scale;
+
+    // 4 rings: outer bright, inner fades
+    final strokes = [0.75, 0.55, 0.38, 0.22];
+    final fills = [0.07, 0.05, 0.04, 0.03];
+
+    for (int i = 3; i >= 0; i--) {
+      final r = maxR * ((i + 1) / 4);
+      // fill
+      canvas.drawCircle(
+          Offset(cx, cy),
+          r,
+          Paint()
+            ..color = Colors.white.withOpacity(fills[i])
+            ..style = PaintingStyle.fill);
+      // stroke
+      canvas.drawCircle(
+          Offset(cx, cy),
+          r,
+          Paint()
+            ..color = Colors.white.withOpacity(strokes[i])
+            ..style = PaintingStyle.stroke
+            ..strokeWidth = i == 3 ? 2.0 : 1.2);
+    }
+  }
+
+  @override
+  bool shouldRepaint(_RingsPainter old) => old.scale != scale;
 }

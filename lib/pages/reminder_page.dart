@@ -1,178 +1,569 @@
 import 'package:flutter/material.dart';
+import 'reminder_store.dart';
+import 'medical_reminder_page.dart';
+import 'add_medicine_name_page.dart';
 
-class ReminderPage extends StatelessWidget {
+// Smart entry point from bottom nav:
+// - Has reminders → MedicalReminderPage (calendar)
+// - No reminders → original landing page
+class ReminderPage extends StatefulWidget {
   const ReminderPage({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    // Demo reminders - replace with actual data later
-    final List<Map<String, dynamic>> reminders = [];
+  State<ReminderPage> createState() => _ReminderPageState();
+}
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text(
-          'Medicine Reminders',
-          style: TextStyle(fontFamily: 'Poppins', fontWeight: FontWeight.w500),
-        ),
-        backgroundColor: const Color(0xFF0796DE),
-        foregroundColor: Colors.white,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.add),
-            onPressed: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Add reminder feature will be implemented'),
-                ),
-              );
-            },
-          ),
-        ],
-      ),
-      body: reminders.isEmpty
-          ? Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(Icons.alarm_off, size: 100, color: Colors.grey[300]),
-                  const SizedBox(height: 20),
-                  const Text(
-                    'No reminders set',
-                    style: TextStyle(
-                      fontSize: 20,
-                      fontFamily: 'Poppins',
-                      fontWeight: FontWeight.w500,
-                      color: Color(0xFF919191),
-                    ),
-                  ),
-                  const SizedBox(height: 10),
-                  const Text(
-                    'Add reminders for your medications',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontFamily: 'Poppins',
-                      color: Color(0xFF919191),
-                    ),
-                  ),
-                  const SizedBox(height: 30),
-                  ElevatedButton.icon(
-                    onPressed: () {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text(
-                            'Add reminder feature will be implemented',
-                          ),
-                        ),
-                      );
-                    },
-                    icon: const Icon(Icons.add),
-                    label: const Text(
-                      'Add Reminder',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontFamily: 'Poppins',
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF0796DE),
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 30,
-                        vertical: 15,
-                      ),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            )
-          : ListView.builder(
-              padding: const EdgeInsets.all(20),
-              itemCount: reminders.length,
-              itemBuilder: (context, index) {
-                final reminder = reminders[index];
-                return _ReminderItem(
-                  medicineName: reminder['medicine'],
-                  time: reminder['time'],
-                  dosage: reminder['dosage'],
-                  isActive: reminder['isActive'],
-                );
-              },
-            ),
-    );
+class _ReminderPageState extends State<ReminderPage> {
+  @override
+  Widget build(BuildContext context) {
+    if (ReminderStore.instance.hasReminders) {
+      return const MedicalReminderPage();
+    }
+    return _ReminderLandingPage();
   }
 }
 
-class _ReminderItem extends StatelessWidget {
-  final String medicineName;
-  final String time;
-  final String dosage;
-  final bool isActive;
+// ── Your original landing page — completely unchanged ─────────────────────────
+class _ReminderLandingPage extends StatefulWidget {
+  @override
+  State<_ReminderLandingPage> createState() => _ReminderLandingPageState();
+}
 
-  const _ReminderItem({
-    required this.medicineName,
-    required this.time,
-    required this.dosage,
-    required this.isActive,
-  });
+class _ReminderLandingPageState extends State<_ReminderLandingPage> {
+  void _showUnderDevelopmentDialog() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => const AddMedicineNamePage()),
+    ).then((_) => setState(() {})); // refresh so routing re-evaluates on return
+  }
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 15),
-      padding: const EdgeInsets.all(15),
-      decoration: BoxDecoration(
-        color: const Color(0xFFF4F4F4),
-        border: Border.all(width: 1, color: const Color(0xFFEFEFEF)),
-        borderRadius: BorderRadius.circular(10),
+    final screenWidth = MediaQuery.of(context).size.width;
+
+    return Scaffold(
+      body: Container(
+        width: double.infinity,
+        height: double.infinity,
+        clipBehavior: Clip.antiAlias,
+        decoration: const BoxDecoration(color: Color(0xFF0796DE)),
+        child: Stack(
+          children: [
+            ..._buildDecorativeCircles(),
+            Positioned(
+              left: 0,
+              right: 0,
+              bottom: 0,
+              height: 280,
+              child: Container(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [
+                      const Color(0xFF0796DE).withOpacity(0.0),
+                      const Color(0xFF0796DE).withOpacity(0.3),
+                      const Color(0xFF0564B8).withOpacity(0.7),
+                      const Color(0xFF001F81),
+                    ],
+                    stops: const [0.0, 0.3, 0.6, 1.0],
+                  ),
+                ),
+              ),
+            ),
+            Positioned(
+              left: -60.66,
+              top: 41.61,
+              child: Transform.rotate(
+                angle: -0.02,
+                child: _buildReminderCard(
+                  width: 307.07,
+                  frequency: 'S M T W ',
+                  frequencyHighlight: 'T F S',
+                  title: 'Creatine',
+                  times: ['8 : 00 AM'],
+                  badge: _buildDoneBadge(),
+                ),
+              ),
+            ),
+            Positioned(
+              left: 146.82,
+              top: 122,
+              child: Transform.rotate(
+                angle: 0.09,
+                child: _buildReminderCard(
+                  width: 337,
+                  frequency: 'S M T W T F S',
+                  title: 'Drink Water',
+                  times: ['8 : 00 AM', '1 : 00 PM', '7 : 00 PM'],
+                  badge: _buildDoneBadge(),
+                ),
+              ),
+            ),
+            Positioned(
+              left: 13,
+              top: 247.59,
+              child: Transform.rotate(
+                angle: -0.08,
+                child: _buildReminderCard(
+                  width: 307.07,
+                  frequency: 'Every 3 days',
+                  title: 'Probiotics',
+                  times: ['8 : 00 AM', '9 : 00 PM'],
+                  badge: _buildCheckBadge(),
+                ),
+              ),
+            ),
+            Positioned(
+              left: 64.02,
+              top: 330,
+              child: Transform.rotate(
+                angle: 0.04,
+                child: _buildReminderCard(
+                  width: 307.07,
+                  frequency: '21+7 Days',
+                  title: 'Birth Control',
+                  times: ['8 : 00 AM'],
+                  badge: _buildSkippedBadge(),
+                ),
+              ),
+            ),
+            Positioned(
+              left: 0,
+              right: 0,
+              bottom: 180,
+              child: Center(
+                child: Image.asset(
+                  'assets/images/Medifind logo with white letterings.png',
+                  width: 119,
+                  height: 66,
+                  fit: BoxFit.contain,
+                ),
+              ),
+            ),
+            Positioned(
+              left: 0,
+              right: 0,
+              bottom: 90,
+              child: Center(
+                child: GestureDetector(
+                  onTap: _showUnderDevelopmentDialog,
+                  child: Container(
+                    width: 287,
+                    height: 64,
+                    decoration: ShapeDecoration(
+                      color: Colors.white,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(63),
+                      ),
+                    ),
+                    child: const Center(
+                      child: Text(
+                        'Add Reminder',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          color: Color(0xFF0796DE),
+                          fontSize: 32,
+                          fontFamily: 'Poppins',
+                          fontWeight: FontWeight.w900,
+                          letterSpacing: -0.32,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
-      child: Row(
+    );
+  }
+
+  Widget _buildReminderCard({
+    required double width,
+    required String frequency,
+    String? frequencyHighlight,
+    required String title,
+    required List<String> times,
+    required Widget badge,
+  }) {
+    return Container(
+      width: width,
+      height: 96.04,
+      decoration: ShapeDecoration(
+        color: Colors.white,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
+        shadows: const [
+          BoxShadow(
+              color: Color(0xFF052F84), blurRadius: 48, offset: Offset(0, 2))
+        ],
+      ),
+      child: Stack(
         children: [
-          Container(
-            width: 50,
-            height: 50,
-            decoration: BoxDecoration(
-              color: const Color(0xFF0796DE).withOpacity(0.1),
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: const Icon(Icons.medication, color: Color(0xFF0796DE)),
+          Positioned(
+            left: 23,
+            top: frequencyHighlight != null ? 11 : 16,
+            child: frequencyHighlight != null
+                ? Text.rich(TextSpan(children: [
+                    TextSpan(
+                        text: frequency,
+                        style: const TextStyle(
+                            color: Color(0xFF9F9EA5),
+                            fontSize: 12,
+                            fontFamily: 'Poppins',
+                            fontWeight: FontWeight.w500,
+                            letterSpacing: 1)),
+                    TextSpan(
+                        text: frequencyHighlight,
+                        style: const TextStyle(
+                            color: Color(0xFF11A2EB),
+                            fontSize: 12,
+                            fontFamily: 'Poppins',
+                            fontWeight: FontWeight.w500,
+                            letterSpacing: 1)),
+                  ]))
+                : Text(frequency,
+                    style: const TextStyle(
+                        color: Color(0xFF9F9EA5),
+                        fontSize: 12,
+                        fontFamily: 'Poppins',
+                        fontWeight: FontWeight.w500,
+                        letterSpacing: 1)),
           ),
-          const SizedBox(width: 15),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  medicineName,
-                  style: const TextStyle(
-                    color: Color(0xFF1E1E1E),
-                    fontSize: 16,
+          Positioned(
+            left: 23,
+            top: frequencyHighlight != null ? 38 : 33,
+            child: Text(title,
+                style: const TextStyle(
+                    color: Color(0xFF11A2EB),
+                    fontSize: 15,
                     fontFamily: 'Poppins',
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  '$dosage • $time',
-                  style: const TextStyle(
-                    color: Color(0xFF919191),
-                    fontSize: 14,
-                    fontFamily: 'Poppins',
-                  ),
-                ),
-              ],
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: 1)),
+          ),
+          Positioned(
+            left: 18,
+            top: 62,
+            child: Row(
+              children: times
+                  .map((time) => Padding(
+                        padding: const EdgeInsets.only(right: 8),
+                        child: _buildTimePill(time),
+                      ))
+                  .toList(),
             ),
           ),
-          Switch(
-            value: isActive,
-            onChanged: (value) {},
-            activeColor: const Color(0xFF0796DE),
-          ),
+          Positioned(right: 21, top: 16, child: badge),
         ],
       ),
     );
+  }
+
+  Widget _buildDoneBadge() {
+    return Opacity(
+      opacity: 0.40,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+        decoration: ShapeDecoration(
+            color: const Color(0xFF11A2EB),
+            shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(22))),
+        child: Row(mainAxisSize: MainAxisSize.min, children: const [
+          Text('O ',
+              style: TextStyle(
+                  color: Color(0xFF0091DB),
+                  fontSize: 11,
+                  fontFamily: 'Poppins',
+                  fontWeight: FontWeight.w400,
+                  letterSpacing: 1)),
+          Text('Done',
+              style: TextStyle(
+                  color: Color(0xFF0091DB),
+                  fontSize: 11,
+                  fontFamily: 'Poppins',
+                  fontWeight: FontWeight.w400,
+                  letterSpacing: 1)),
+        ]),
+      ),
+    );
+  }
+
+  Widget _buildCheckBadge() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+      decoration: ShapeDecoration(
+          color: const Color(0xFF11A2EB),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(22))),
+      child: Row(mainAxisSize: MainAxisSize.min, children: const [
+        Text('✓ ',
+            style: TextStyle(
+                color: Colors.white,
+                fontSize: 11,
+                fontFamily: 'Poppins',
+                fontWeight: FontWeight.w400,
+                letterSpacing: 1)),
+        Text('8.05',
+            style: TextStyle(
+                color: Colors.white,
+                fontSize: 11,
+                fontFamily: 'Poppins',
+                fontWeight: FontWeight.w400,
+                letterSpacing: 1)),
+      ]),
+    );
+  }
+
+  Widget _buildSkippedBadge() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+      decoration: ShapeDecoration(
+          color: const Color(0xFF11A2EB),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(22))),
+      child: const Text('Skipped',
+          style: TextStyle(
+              color: Colors.white,
+              fontSize: 11,
+              fontFamily: 'Poppins',
+              fontWeight: FontWeight.w400,
+              letterSpacing: 1)),
+    );
+  }
+
+  Widget _buildTimePill(String time) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+      decoration: ShapeDecoration(
+          color: const Color(0xFF5FB6D7),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(22))),
+      child: Text(time,
+          style: const TextStyle(
+              color: Colors.white,
+              fontSize: 11,
+              fontFamily: 'Poppins',
+              fontWeight: FontWeight.w400,
+              letterSpacing: 1)),
+    );
+  }
+
+  List<Widget> _buildDecorativeCircles() {
+    return [
+      Positioned(
+          left: 124.48,
+          top: 5.38,
+          child: Transform.rotate(
+              angle: 0.53,
+              child: Container(
+                  width: 183,
+                  height: 183,
+                  decoration: const ShapeDecoration(
+                      shape: OvalBorder(
+                          side: BorderSide(
+                              width: 30, color: Color(0xFF10A2EA))))))),
+      Positioned(
+          left: 112.01,
+          top: 104.44,
+          child: Opacity(
+              opacity: 0.30,
+              child: Transform.rotate(
+                  angle: 3.03,
+                  child: Container(
+                      width: 153.81,
+                      height: 153.81,
+                      decoration: const ShapeDecoration(
+                          gradient: LinearGradient(
+                              begin: Alignment(0.93, 0.35),
+                              end: Alignment(0.06, 0.40),
+                              colors: [Color(0xAFFDEDCA), Color(0xFF0A9BE2)]),
+                          shape: OvalBorder()))))),
+      Positioned(
+          left: 14.30,
+          top: -19.87,
+          child: Opacity(
+              opacity: 0.30,
+              child: Transform.rotate(
+                  angle: 0.57,
+                  child: Container(
+                      width: 89.35,
+                      height: 89.35,
+                      decoration: const ShapeDecoration(
+                          gradient: LinearGradient(
+                              begin: Alignment(0.93, 0.35),
+                              end: Alignment(0.06, 0.40),
+                              colors: [Color(0xFFFDEDCA), Color(0xFF0A9BE2)]),
+                          shape: OvalBorder()))))),
+      Positioned(
+          left: 92.99,
+          top: 216.82,
+          child: Opacity(
+              opacity: 0.30,
+              child: Transform.rotate(
+                  angle: 3.03,
+                  child: Container(
+                      width: 94.08,
+                      height: 94.08,
+                      decoration: const ShapeDecoration(
+                          gradient: LinearGradient(
+                              begin: Alignment(0.93, 0.35),
+                              end: Alignment(0.06, 0.40),
+                              colors: [Color(0xAFFDEDCA), Color(0xFF0A9BE2)]),
+                          shape: OvalBorder()))))),
+      Positioned(
+          left: 292.47,
+          top: -117,
+          child: Transform.rotate(
+              angle: 0.40,
+              child: Container(
+                  width: 167,
+                  height: 167,
+                  decoration: const ShapeDecoration(
+                      shape: OvalBorder(
+                          side: BorderSide(
+                              width: 30, color: Color(0xFF10A2EA))))))),
+      Positioned(
+          left: 366.60,
+          top: 919.60,
+          child: Container(
+              width: 183,
+              height: 183,
+              decoration: const ShapeDecoration(
+                  shape: OvalBorder(
+                      side: BorderSide(width: 30, color: Color(0xFF10A2EA)))))),
+      Positioned(
+          left: 273.59,
+          top: 622.74,
+          child: Opacity(
+              opacity: 0.30,
+              child: Transform.rotate(
+                  angle: 6.17,
+                  child: Container(
+                      width: 153.81,
+                      height: 153.81,
+                      decoration: const ShapeDecoration(
+                          gradient: LinearGradient(
+                              begin: Alignment(0.93, 0.35),
+                              end: Alignment(0.06, 0.40),
+                              colors: [Color(0xAFFDEDCA), Color(0xFF0A9BE2)]),
+                          shape: OvalBorder()))))),
+      Positioned(
+          left: 371.30,
+          top: 757.60,
+          child: Opacity(
+              opacity: 0.30,
+              child: Transform.rotate(
+                  angle: 3.71,
+                  child: Container(
+                      width: 89.35,
+                      height: 89.35,
+                      decoration: const ShapeDecoration(
+                          gradient: LinearGradient(
+                              begin: Alignment(0.93, 0.35),
+                              end: Alignment(0.06, 0.40),
+                              colors: [Color(0xFFFDEDCA), Color(0xFF0A9BE2)]),
+                          shape: OvalBorder()))))),
+      Positioned(
+          left: 292.61,
+          top: 787.82,
+          child: Opacity(
+              opacity: 0.30,
+              child: Transform.rotate(
+                  angle: 6.17,
+                  child: Container(
+                      width: 94.08,
+                      height: 94.08,
+                      decoration: const ShapeDecoration(
+                          gradient: LinearGradient(
+                              begin: Alignment(0.93, 0.35),
+                              end: Alignment(0.06, 0.40),
+                              colors: [Color(0xAFFDEDCA), Color(0xFF0A9BE2)]),
+                          shape: OvalBorder()))))),
+      Positioned(
+          left: 93.13,
+          top: 755.42,
+          child: Transform.rotate(
+              angle: 3.54,
+              child: Container(
+                  width: 167,
+                  height: 167,
+                  decoration: const ShapeDecoration(
+                      shape: OvalBorder(
+                          side: BorderSide(
+                              width: 30, color: Color(0xFF10A2EA))))))),
+      Positioned(
+          left: 249.59,
+          top: 336.74,
+          child: Opacity(
+              opacity: 0.30,
+              child: Transform.rotate(
+                  angle: 6.17,
+                  child: Container(
+                      width: 153.81,
+                      height: 153.81,
+                      decoration: const ShapeDecoration(
+                          gradient: LinearGradient(
+                              begin: Alignment(0.93, 0.35),
+                              end: Alignment(0.06, 0.40),
+                              colors: [Color(0xAFFDEDCA), Color(0xFF0A9BE2)]),
+                          shape: OvalBorder()))))),
+      Positioned(
+          left: 371.17,
+          top: 421.47,
+          child: Opacity(
+              opacity: 0.30,
+              child: Transform.rotate(
+                  angle: 3.71,
+                  child: Container(
+                      width: 89.35,
+                      height: 89.35,
+                      decoration: const ShapeDecoration(
+                          gradient: LinearGradient(
+                              begin: Alignment(0.93, 0.35),
+                              end: Alignment(0.06, 0.40),
+                              colors: [Color(0xFFFDEDCA), Color(0xFF0A9BE2)]),
+                          shape: OvalBorder()))))),
+      Positioned(
+          left: 209,
+          top: 505.49,
+          child: Opacity(
+              opacity: 0.30,
+              child: Transform.rotate(
+                  angle: 6.17,
+                  child: Container(
+                      width: 94.08,
+                      height: 94.08,
+                      decoration: const ShapeDecoration(
+                          gradient: LinearGradient(
+                              begin: Alignment(0.93, 0.35),
+                              end: Alignment(0.06, 0.40),
+                              colors: [Color(0xAFFDEDCA), Color(0xFF0A9BE2)]),
+                          shape: OvalBorder()))))),
+      Positioned(
+          left: 69.13,
+          top: 469.42,
+          child: Transform.rotate(
+              angle: 3.54,
+              child: Container(
+                  width: 167,
+                  height: 167,
+                  decoration: const ShapeDecoration(
+                      shape: OvalBorder(
+                          side: BorderSide(
+                              width: 30, color: Color(0xFF10A2EA))))))),
+      Positioned(
+          left: 490,
+          top: 284,
+          child: Transform.rotate(
+              angle: 3.14,
+              child: Container(
+                  width: 183,
+                  height: 183,
+                  decoration: const ShapeDecoration(
+                      shape: OvalBorder(
+                          side: BorderSide(
+                              width: 30, color: Color(0xFF10A2EA))))))),
+    ];
   }
 }

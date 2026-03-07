@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import '../pages/upload_prescription_options_page.dart';
-import '../pages/reminder_page.dart';
+import '../pages/add_medicine_name_page.dart';
 import '../pages/previous_orders_page.dart';
 import '../pages/health_profile_page.dart';
+import '../pages/pharmacy_registration_page.dart';
 
 class ServicesCarousel extends StatelessWidget {
   const ServicesCarousel({super.key});
@@ -11,29 +12,40 @@ class ServicesCarousel extends StatelessWidget {
   Widget build(BuildContext context) {
     final services = [
       {
-        'name': 'Upload\nprescription',
-        'icon': Icons.upload_file,
+        'name': 'Upload\nPrescription',
+        'icon': Icons.upload_file_rounded,
+        'gradient': [const Color(0xFF0796DE), const Color(0xFF0567A8)],
         'page': UploadPrescriptionOptionsPage(),
       },
       {
-        'name': 'reminder',
-        'icon': Icons.alarm,
-        'page': const ReminderPage(),
+        'name': 'Reminder',
+        'icon': Icons.alarm_rounded,
+        'gradient': [const Color(0xFF0796DE), const Color(0xFF0567A8)],
+        // Always goes to add reminder flow from home services
+        'page': const AddMedicineNamePage(),
       },
       {
-        'name': 'past\norders',
-        'icon': Icons.history,
+        'name': 'Past\nOrders',
+        'icon': Icons.history_rounded,
+        'gradient': [const Color(0xFF0796DE), const Color(0xFF0567A8)],
         'page': const PreviousOrdersPage(),
       },
       {
-        'name': 'view your\naccount',
-        'icon': Icons.account_circle,
+        'name': 'Register\nPharmacy',
+        'icon': Icons.local_pharmacy_rounded,
+        'gradient': [const Color(0xFF0796DE), const Color(0xFF0567A8)],
+        'page': const PharmacyRegistrationPage(),
+      },
+      {
+        'name': 'My\nAccount',
+        'icon': Icons.account_circle_rounded,
+        'gradient': [const Color(0xFF0796DE), const Color(0xFF0567A8)],
         'page': const HealthProfilePage(),
       },
     ];
 
     return SizedBox(
-      height: 140,
+      height: 130,
       child: ListView.builder(
         scrollDirection: Axis.horizontal,
         physics: const BouncingScrollPhysics(),
@@ -42,11 +54,12 @@ class ServicesCarousel extends StatelessWidget {
           final service = services[index];
           return Padding(
             padding: EdgeInsets.only(
-              right: index == services.length - 1 ? 0 : 15,
+              right: index == services.length - 1 ? 0 : 14,
             ),
             child: _ServiceItem(
               name: service['name'] as String,
               icon: service['icon'] as IconData,
+              gradient: service['gradient'] as List<Color>,
               onTap: () {
                 Navigator.push(
                   context,
@@ -66,11 +79,13 @@ class ServicesCarousel extends StatelessWidget {
 class _ServiceItem extends StatelessWidget {
   final String name;
   final IconData icon;
+  final List<Color> gradient;
   final VoidCallback onTap;
 
   const _ServiceItem({
     required this.name,
     required this.icon,
+    required this.gradient,
     required this.onTap,
   });
 
@@ -78,40 +93,76 @@ class _ServiceItem extends StatelessWidget {
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: onTap,
-      child: Column(
-        children: [
-          Container(
-            width: 125,
-            height: 95,
-            decoration: BoxDecoration(
-              color: const Color(0xFFF4F4F4),
-              border: Border.all(
-                width: 1,
-                color: const Color(0xFFEFEFEF),
+      child: SizedBox(
+        width: 110,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 110,
+              height: 90,
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: gradient,
+                ),
+                borderRadius: BorderRadius.circular(14),
+                boxShadow: [
+                  BoxShadow(
+                    color: const Color(0xFF0796DE).withOpacity(0.30),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
               ),
-              borderRadius: BorderRadius.circular(10),
+              child: Stack(
+                children: [
+                  Positioned(
+                    top: -12,
+                    right: -12,
+                    child: Container(
+                      width: 50,
+                      height: 50,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: Colors.white.withOpacity(0.10),
+                      ),
+                    ),
+                  ),
+                  Positioned(
+                    bottom: -10,
+                    left: -10,
+                    child: Container(
+                      width: 38,
+                      height: 38,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: Colors.white.withOpacity(0.08),
+                      ),
+                    ),
+                  ),
+                  Center(
+                    child: Icon(icon, color: Colors.white, size: 38),
+                  ),
+                ],
+              ),
             ),
-            child: Icon(
-              icon,
-              color: const Color(0xFF0796DE),
-              size: 48,
-            ),
-          ),
-          const SizedBox(height: 11),
-          SizedBox(
-            width: 104,
-            child: Text(
+            const SizedBox(height: 8),
+            Text(
               name,
               textAlign: TextAlign.center,
+              maxLines: 2,
               style: const TextStyle(
                 color: Color(0xFF1E1E1E),
-                fontSize: 16,
+                fontSize: 12,
                 fontFamily: 'Poppins',
-                fontWeight: FontWeight.w400,
+                fontWeight: FontWeight.w500,
+                height: 1.3,
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

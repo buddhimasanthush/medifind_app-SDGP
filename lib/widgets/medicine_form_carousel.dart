@@ -4,19 +4,19 @@ import '../pages/medicine_form_page.dart';
 class MedicineFormCarousel extends StatelessWidget {
   const MedicineFormCarousel({super.key});
 
-  final List<Map<String, dynamic>> forms = const [
-    {'name': 'Liquid', 'icon': Icons.water_drop},
-    {'name': 'Capsule', 'icon': Icons.medication},
-    {'name': 'Tablet', 'icon': Icons.circle},
-    {'name': 'Syringe', 'icon': Icons.vaccines},
-    {'name': 'Pills', 'icon': Icons.medication_liquid},
-    {'name': 'Suspension', 'icon': Icons.opacity},
-    {'name': 'Drops', 'icon': Icons.water},
-    {'name': 'Infusion', 'icon': Icons.local_hospital},
-    {'name': 'Cream', 'icon': Icons.wash},
-    {'name': 'Ointment', 'icon': Icons.healing},
-    {'name': 'Spray', 'icon': Icons.air},
-    {'name': 'Nebulizer', 'icon': Icons.cloud},
+  static const List<Map<String, dynamic>> forms = [
+    {'name': 'Liquid', 'icon': Icons.water_drop_rounded},
+    {'name': 'Capsule', 'icon': Icons.medication_rounded},
+    {'name': 'Tablet', 'icon': Icons.circle_rounded},
+    {'name': 'Syringe', 'icon': Icons.vaccines_rounded},
+    {'name': 'Pills', 'icon': Icons.medication_liquid_rounded},
+    {'name': 'Suspension', 'icon': Icons.opacity_rounded},
+    {'name': 'Drops', 'icon': Icons.water_rounded},
+    {'name': 'Infusion', 'icon': Icons.local_hospital_rounded},
+    {'name': 'Cream', 'icon': Icons.wash_rounded},
+    {'name': 'Ointment', 'icon': Icons.healing_rounded},
+    {'name': 'Spray', 'icon': Icons.air_rounded},
+    {'name': 'Nebulizer', 'icon': Icons.cloud_rounded},
   ];
 
   @override
@@ -30,16 +30,19 @@ class MedicineFormCarousel extends StatelessWidget {
         itemBuilder: (context, index) {
           final form = forms[index];
           return Padding(
-            padding: EdgeInsets.only(right: index == forms.length - 1 ? 0 : 12),
+            padding: EdgeInsets.only(
+              right: index == forms.length - 1 ? 0 : 14,
+            ),
             child: _MedicineFormItem(
-              name: form['name'],
-              icon: form['icon'],
+              name: form['name'] as String,
+              icon: form['icon'] as IconData,
               onTap: () {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (context) =>
-                        MedicineFormPage(formName: form['name']),
+                    builder: (context) => MedicineFormPage(
+                      formName: form['name'] as String,
+                    ),
                   ),
                 );
               },
@@ -66,33 +69,44 @@ class _MedicineFormItem extends StatelessWidget {
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: onTap,
-      child: Column(
-        children: [
-          Container(
-            width: 64,
-            height: 66,
-            decoration: BoxDecoration(
-              gradient: const LinearGradient(
-                begin: Alignment(0.00, 0.00),
-                end: Alignment(0.66, 1.00),
-                colors: [Color(0xFFE68E2D), Color(0xFFF09E43)],
+      child: SizedBox(
+        width: 68,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 64,
+              height: 64,
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [Color(0xFFE68E2D), Color(0xFFF0A94A)],
+                ),
+                borderRadius: BorderRadius.circular(18),
+                boxShadow: [
+                  BoxShadow(
+                    color: const Color(0xFFE68E2D).withOpacity(0.30),
+                    blurRadius: 8,
+                    offset: const Offset(0, 3),
+                  ),
+                ],
               ),
-              borderRadius: BorderRadius.circular(19),
+              child: Icon(icon, color: Colors.white, size: 30),
             ),
-            child: Icon(icon, color: Colors.white, size: 32),
-          ),
-          const SizedBox(height: 11),
-          Text(
-            name,
-            textAlign: TextAlign.center,
-            style: const TextStyle(
-              color: Color(0xFF1E1E1E),
-              fontSize: 16,
-              fontFamily: 'Poppins',
-              fontWeight: FontWeight.w400,
+            const SizedBox(height: 9),
+            Text(
+              name,
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                color: Color(0xFF1E1E1E),
+                fontSize: 13,
+                fontFamily: 'Poppins',
+                fontWeight: FontWeight.w400,
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
