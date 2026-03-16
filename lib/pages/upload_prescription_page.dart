@@ -109,6 +109,7 @@ class _UploadPrescriptionPageState extends State<UploadPrescriptionPage>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: const Color(0xFFFAFAFA),
       body: Stack(
         children: [
           _buildBackground(),
