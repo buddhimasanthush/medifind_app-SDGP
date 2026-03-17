@@ -17,7 +17,7 @@ class _OnboardingFlowPageState extends State<OnboardingFlowPage> {
   int _step = 0;
 
   void _next() {
-    if (_step < 4) {
+    if (_step < 6) {
       setState(() => _step++);
     } else {
       _finish();
@@ -36,11 +36,13 @@ class _OnboardingFlowPageState extends State<OnboardingFlowPage> {
   @override
   Widget build(BuildContext context) {
     final steps = [
-      _StepPhone(onNext: _next, onSkip: _finish, step: 0, total: 5),
-      _StepDOB(onNext: _next, onSkip: _finish, step: 1, total: 5),
-      _StepBloodType(onNext: _next, onSkip: _finish, step: 2, total: 5),
-      _StepAllergies(onNext: _next, onSkip: _finish, step: 3, total: 5),
-      _StepChronic(onNext: _next, onSkip: _finish, step: 4, total: 5),
+      _StepPhone(onNext: _next, onSkip: _finish, step: 0, total: 7),
+      _StepDOB(onNext: _next, onSkip: _finish, step: 1, total: 7),
+      _StepBloodType(onNext: _next, onSkip: _finish, step: 2, total: 7),
+      _StepAge(onNext: _next, onSkip: _finish, step: 3, total: 7),
+      _StepWeight(onNext: _next, onSkip: _finish, step: 4, total: 7),
+      _StepAllergies(onNext: _next, onSkip: _finish, step: 5, total: 7),
+      _StepChronic(onNext: _next, onSkip: _finish, step: 6, total: 7),
     ];
 
     return AnimatedSwitcher(
@@ -641,7 +643,162 @@ class _StepBloodTypeState extends State<_StepBloodType> {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// STEP 4 — Allergies
+// STEP 4 — Age
+// ─────────────────────────────────────────────────────────────────────────────
+class _StepAge extends StatefulWidget {
+  final VoidCallback onNext, onSkip;
+  final int step, total;
+  const _StepAge(
+      {required this.onNext,
+      required this.onSkip,
+      required this.step,
+      required this.total});
+  @override
+  State<_StepAge> createState() => _StepAgeState();
+}
+
+class _StepAgeState extends State<_StepAge> {
+  final _ages = List.generate(83, (i) => '${i + 18}'); // 18–100
+  late final FixedExtentScrollController _ageCtrl;
+
+  @override
+  void initState() {
+    super.initState();
+    _ageCtrl = FixedExtentScrollController(initialItem: 7); // default 25
+  }
+
+  @override
+  void dispose() {
+    _ageCtrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return _OnboardingScaffold(
+      step: widget.step,
+      total: widget.total,
+      emoji: '🎂',
+      title: 'How Old Are You?',
+      subtitle:
+          'Scroll to your age.\nHelps us personalise health tips for you.',
+      nextLabel: 'Next →',
+      onNext: () {
+        UserStore.instance.age = int.parse(_ages[_ageCtrl.selectedItem]);
+        widget.onNext();
+      },
+      onSkip: widget.onSkip,
+      picker: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 8),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Expanded(
+                flex: 2,
+                child: _WheelPicker(
+                    items: _ages,
+                    controller: _ageCtrl,
+                    itemHeight: 64,
+                    fontSize: 32)),
+            Padding(
+                padding: const EdgeInsets.only(right: 28),
+                child: Text('years',
+                    style: TextStyle(
+                        color: const Color(0xFF0796DE).withOpacity(0.6),
+                        fontSize: 16,
+                        fontFamily: 'Poppins',
+                        fontWeight: FontWeight.w500))),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// STEP 5 — Weight
+// ─────────────────────────────────────────────────────────────────────────────
+class _StepWeight extends StatefulWidget {
+  final VoidCallback onNext, onSkip;
+  final int step, total;
+  const _StepWeight(
+      {required this.onNext,
+      required this.onSkip,
+      required this.step,
+      required this.total});
+  @override
+  State<_StepWeight> createState() => _StepWeightState();
+}
+
+class _StepWeightState extends State<_StepWeight> {
+  final _kgs = List.generate(171, (i) => '${i + 30}'); // 30–200 kg
+  final _decs = List.generate(10, (i) => '.$i'); // .0–.9
+  late final FixedExtentScrollController _kgCtrl, _decCtrl;
+
+  @override
+  void initState() {
+    super.initState();
+    _kgCtrl = FixedExtentScrollController(initialItem: 40); // default 70 kg
+    _decCtrl = FixedExtentScrollController(initialItem: 0);
+  }
+
+  @override
+  void dispose() {
+    _kgCtrl.dispose();
+    _decCtrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return _OnboardingScaffold(
+      step: widget.step,
+      total: widget.total,
+      emoji: '⚖️',
+      title: 'Your Weight',
+      subtitle:
+          'Scroll to set your weight.\nUsed to calculate safe medication doses.',
+      nextLabel: 'Next →',
+      onNext: () {
+        final kg = int.parse(_kgs[_kgCtrl.selectedItem]);
+        final dec = int.parse(_decs[_decCtrl.selectedItem].replaceAll('.', ''));
+        UserStore.instance.weight = kg + dec / 10.0;
+        widget.onNext();
+      },
+      onSkip: widget.onSkip,
+      picker: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 8),
+        child: Row(children: [
+          Expanded(
+              flex: 3,
+              child: _WheelPicker(
+                  items: _kgs,
+                  controller: _kgCtrl,
+                  itemHeight: 64,
+                  fontSize: 32)),
+          Expanded(
+              flex: 2,
+              child: _WheelPicker(
+                  items: _decs,
+                  controller: _decCtrl,
+                  itemHeight: 64,
+                  fontSize: 28)),
+          Padding(
+              padding: const EdgeInsets.only(right: 20),
+              child: Text('kg',
+                  style: TextStyle(
+                      color: const Color(0xFF0796DE).withOpacity(0.6),
+                      fontSize: 18,
+                      fontFamily: 'Poppins',
+                      fontWeight: FontWeight.w600))),
+        ]),
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// STEP 6 — Allergies
 // ─────────────────────────────────────────────────────────────────────────────
 class _StepAllergies extends StatefulWidget {
   final VoidCallback onNext, onSkip;
@@ -705,7 +862,7 @@ class _StepAllergiesState extends State<_StepAllergies> {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// STEP 5 — Chronic Conditions
+// STEP 7 — Chronic Conditions
 // ─────────────────────────────────────────────────────────────────────────────
 class _StepChronic extends StatefulWidget {
   final VoidCallback onNext, onSkip;

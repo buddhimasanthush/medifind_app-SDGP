@@ -240,6 +240,14 @@ class _HealthProfilePageState extends State<HealthProfilePage>
                         UserStore.instance.email = '';
                         UserStore.instance.emoji = '👤';
                         UserStore.instance.avatarColorValue = 0xFF0796DE;
+                        UserStore.instance.phone = '';
+                        UserStore.instance.dateOfBirth = '';
+                        UserStore.instance.bloodType = '';
+                        UserStore.instance.allergies = '';
+                        UserStore.instance.chronicConditions = '';
+                        UserStore.instance.age = 0;
+                        UserStore.instance.weight = 0;
+                        UserStore.instance.hasCompletedOnboarding = false;
                         // Navigate to sign in, clear all routes
                         Navigator.pushAndRemoveUntil(
                           context,
@@ -417,13 +425,21 @@ class _HealthProfilePageState extends State<HealthProfilePage>
                               const SizedBox(width: 10),
                               _StatChip(
                                   label: 'Age',
-                                  value: '34',
+                                  value: UserStore.instance.age == 0
+                                      ? '—'
+                                      : '${UserStore.instance.age}',
                                   icon: Icons.cake_rounded,
                                   color: const Color(0xFF0796DE)),
                               const SizedBox(width: 10),
                               _StatChip(
                                   label: 'Weight',
-                                  value: '70 kg',
+                                  value: UserStore.instance.weight == 0
+                                      ? '—'
+                                      : UserStore.instance.weight ==
+                                              UserStore.instance.weight
+                                                  .roundToDouble()
+                                          ? '${UserStore.instance.weight.toInt()} kg'
+                                          : '${UserStore.instance.weight} kg',
                                   icon: Icons.monitor_weight_rounded,
                                   color: const Color(0xFF27AE60)),
                             ]),
