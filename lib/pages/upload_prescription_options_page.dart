@@ -129,6 +129,7 @@ class _UploadPrescriptionOptionsPageState
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: const Color(0xFFFAFAFA),
       body: Container(
         width: double.infinity,
         height: double.infinity,
