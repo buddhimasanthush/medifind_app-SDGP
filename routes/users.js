@@ -105,4 +105,17 @@ router.post("/login", async (req, res) => {
   }
 });
 
+// GET all users
+router.get("/", async (req, res) => {
+  try {
+    const users = await User.findAll({
+      attributes: { exclude: ["password"] },
+    });
+    res.json(users);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Something went wrong" });
+  }
+});
+
 module.exports = router;
