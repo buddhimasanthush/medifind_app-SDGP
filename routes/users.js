@@ -1,0 +1,55 @@
+const express = require("express");
+const router = express.Router();
+const bcrypt = require("bcrypt");
+const jwt = require("jsonwebtoken");
+const { User } = require("../models");
+
+const JWT_SECRET = "medifind_secret_key";
+
+// REGISTER
+router.post("/register", async (req, res) => {
+  try {
+    const { fullName, email, password, role, phone } = req.body;
+
+    if (!fullName || !email || !password || !role) {
+      return res.status(400).json({
+        error: "fullName, email, password and role are required",
+      });
+    }
+
+    const existingUser = await User.findOne({ where: { email } });
+
+    if (existingUser) {
+      return res.status(400).json({ error: "Email already registered" });
+    }
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    const newUser = await User.create({
+      fullName,
+      email,
+      password: hashedPassword,
+      role,
+      phone: phone || null,
+    });
+
+    res.status(201).json({
+      message: "User registered successfully",
+      user: {
+        id: newUser.id,
+        fullName: newUser.fullName,
+        email: newUser.email,
+        role: newUser.role,
+        phone: newUser.phone,
+      },
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({
+      error: "Something went wrong",
+      details: err.message,
+    });
+  }
+});
+
+module.exports = router;
