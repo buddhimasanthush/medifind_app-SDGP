@@ -11,6 +11,13 @@ module.exports = {
       fullName: { type: Sequelize.STRING, allowNull: false },
       email: { type: Sequelize.STRING, allowNull: false, unique: true },
       password: { type: Sequelize.STRING, allowNull: false },
+      role: {
+        type: Sequelize.ENUM('Patient', 'Doctor', 'Pharmacy', 'Admin', 'DeliveryPartner'),
+        allowNull: false
+      },
+      phone: { type: Sequelize.STRING },
+      createdAt: { type: Sequelize.DATE, defaultValue: Sequelize.fn('NOW') },
+      updatedAt: { type: Sequelize.DATE, defaultValue: Sequelize.fn('NOW') }
     });
   },
 
