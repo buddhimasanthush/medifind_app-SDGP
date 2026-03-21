@@ -23,4 +23,14 @@ router.get("/:id", async (req, res) => {
   }
 });
 
+// CREATE doctor
+router.post("/", async (req, res) => {
+  try {
+    const newDoctor = await Doctor.create(req.body);
+    res.status(201).json(newDoctor);
+  } catch (err) {
+    res.status(500).json({ error: "Something went wrong" });
+  }
+});
+
 module.exports = router;
