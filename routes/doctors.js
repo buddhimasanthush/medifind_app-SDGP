@@ -45,4 +45,16 @@ router.put("/:id", async (req, res) => {
   }
 });
 
+// DELETE doctor
+router.delete("/:id", async (req, res) => {
+  try {
+    const doctor = await Doctor.findByPk(req.params.id);
+    if (!doctor) return res.status(404).json({ error: "Doctor not found" });
+    await doctor.destroy();
+    res.json({ message: "Doctor deleted" });
+  } catch (err) {
+    res.status(500).json({ error: "Something went wrong" });
+  }
+});
+
 module.exports = router;
