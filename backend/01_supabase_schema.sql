@@ -20,3 +20,16 @@ CREATE TABLE pharmacies (
     location    GEOGRAPHY(POINT, 4326) NOT NULL,
     created_at  TIMESTAMPTZ DEFAULT now()
 );
+
+-- Auto-set geography column from lat/lng
+CREATE OR REPLACE FUNCTION set_pharmacy_location()
+RETURNS TRIGGER AS $$
+BEGIN
+    NEW.location := ST_SetSRID(ST_MakePoint(NEW.longitude, NEW.latitude), 4326)::geography;
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER trg_pharmacy_location
+    BEFORE INSERT OR UPDATE OF latitude, longitude ON pharmacies
+    FOR EACH ROW EXECUTE FUNCTION set_pharmacy_location();
