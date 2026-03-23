@@ -48,3 +48,14 @@ CREATE TABLE brands (
     brand_name      TEXT NOT NULL,
     created_at      TIMESTAMPTZ DEFAULT now()
 );
+
+-- Inventory (what each pharmacy stocks)
+CREATE TABLE inventory (
+    id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    pharmacy_id     UUID NOT NULL REFERENCES pharmacies(id) ON DELETE CASCADE,
+    brand_id        UUID NOT NULL REFERENCES brands(id) ON DELETE CASCADE,
+    price           NUMERIC(10, 2) NOT NULL CHECK (price > 0),
+    quantity        INTEGER NOT NULL DEFAULT 0 CHECK (quantity >= 0),
+    updated_at      TIMESTAMPTZ DEFAULT now(),
+    UNIQUE (pharmacy_id, brand_id)
+);
