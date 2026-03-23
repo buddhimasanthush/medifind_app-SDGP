@@ -150,3 +150,11 @@ async def search_pharmacies(
             best_match=full_matches[0],
             alternatives=full_matches[1:],
             partial_matches=[],
+            suggestion=None,
+        )
+
+    # No full match — generate suggestion
+    suggestion = _build_suggestion(partial_matches, total_meds)
+    return SearchResponse(
+        best_match=None,
+        alternatives=[],
