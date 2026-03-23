@@ -182,3 +182,11 @@ def _build_suggestion(partials: list[PharmacyResult], total: int) -> str:
         f"{best.pharmacy_name} covers {best.matched_medicines}/{total}. "
         f"Consider splitting your order across pharmacies."
     )
+
+
+# ════════════════════════════════════════════════════
+# HELPER: Convert response to JSON-serializable dict
+# (use this in your API endpoint)
+# ════════════════════════════════════════════════════
+
+def response_to_dict(resp: SearchResponse) -> dict:
