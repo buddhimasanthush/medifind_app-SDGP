@@ -46,3 +46,11 @@ class PharmacyResult:
     total_price: float
     items: list[SelectedItem]
 
+
+@dataclass
+class SearchResponse:
+    best_match: PharmacyResult | None
+    alternatives: list[PharmacyResult]
+    partial_matches: list[PharmacyResult]
+    suggestion: str | None
+
