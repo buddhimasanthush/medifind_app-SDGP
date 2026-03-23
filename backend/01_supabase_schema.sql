@@ -33,3 +33,18 @@ $$ LANGUAGE plpgsql;
 CREATE TRIGGER trg_pharmacy_location
     BEFORE INSERT OR UPDATE OF latitude, longitude ON pharmacies
     FOR EACH ROW EXECUTE FUNCTION set_pharmacy_location();
+
+-- Medicines (generic drugs like "Paracetamol", "Amoxicillin")
+CREATE TABLE medicines (
+    id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    generic_name    TEXT NOT NULL UNIQUE,
+    created_at      TIMESTAMPTZ DEFAULT now()
+);
+
+-- Brands (commercial names like "Panadol" → Paracetamol)
+CREATE TABLE brands (
+    id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    medicine_id     UUID NOT NULL REFERENCES medicines(id) ON DELETE CASCADE,
+    brand_name      TEXT NOT NULL,
+    created_at      TIMESTAMPTZ DEFAULT now()
+);
