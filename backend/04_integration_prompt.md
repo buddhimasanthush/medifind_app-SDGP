@@ -144,3 +144,138 @@ async def search_pharmacy(body: SearchRequestBody):
 ```
 
 Make sure `httpx` is in `requirements.txt`.
+
+---
+
+### B. Flutter: Build the pharmacy search feature screens
+
+Follow the existing **features-based architecture** in the Vello app. Create a new feature folder:
+
+```
+lib/
+  features/
+    pharmacy_search/
+      data/
+        pharmacy_search_repository.dart
+      models/
+        pharmacy_result.dart
+        medicine_request.dart
+        search_response.dart
+      screens/
+        pharmacy_search_screen.dart
+        pharmacy_result_screen.dart
+      widgets/
+        medicine_selector.dart
+        pharmacy_card.dart
+```
+
+#### B1. Models
+
+**`medicine_request.dart`**
+```dart
+class MedicineRequest {
+  final String medicineId;
+  final int quantity;
+
+  MedicineRequest({required this.medicineId, required this.quantity});
+
+  Map<String, dynamic> toJson() => {
+    'medicine_id': medicineId,
+    'quantity': quantity,
+  };
+}
+```
+
+**`pharmacy_result.dart`**
+```dart
+class SelectedItem {
+  final String medicineId;
+  final String brandId;
+  final String brandName;
+  final double price;
+  final int quantity;
+
+  SelectedItem({
+    required this.medicineId,
+    required this.brandId,
+    required this.brandName,
+    required this.price,
+    required this.quantity,
+  });
+
+  factory SelectedItem.fromJson(Map<String, dynamic> json) => SelectedItem(
+    medicineId: json['medicine_id'],
+    brandId: json['brand_id'],
+    brandName: json['brand_name'],
+    price: (json['price'] as num).toDouble(),
+    quantity: json['quantity'],
+  );
+}
+
+class PharmacyResult {
+  final String pharmacyId;
+  final String pharmacyName;
+  final double distanceMeters;
+  final bool isFullMatch;
+  final int matchedMedicines;
+  final int totalRequired;
+  final double totalPrice;
+  final List<SelectedItem> items;
+
+  PharmacyResult({
+    required this.pharmacyId,
+    required this.pharmacyName,
+    required this.distanceMeters,
+    required this.isFullMatch,
+    required this.matchedMedicines,
+    required this.totalRequired,
+    required this.totalPrice,
+    required this.items,
+  });
+
+  factory PharmacyResult.fromJson(Map<String, dynamic> json) => PharmacyResult(
+    pharmacyId: json['pharmacy_id'],
+    pharmacyName: json['pharmacy_name'],
+    distanceMeters: (json['distance_meters'] as num).toDouble(),
+    isFullMatch: json['is_full_match'],
+    matchedMedicines: json['matched_medicines'],
+    totalRequired: json['total_required'],
+    totalPrice: (json['total_price'] as num).toDouble(),
+    items: (json['items'] as List)
+        .map((i) => SelectedItem.fromJson(i))
+        .toList(),
+  );
+}
+```
+
+**`search_response.dart`**
+```dart
+class SearchResponse {
+  final PharmacyResult? bestMatch;
+  final List<PharmacyResult> alternatives;
+  final List<PharmacyResult> partialMatches;
+  final String? suggestion;
+
+  SearchResponse({
+    this.bestMatch,
+    this.alternatives = const [],
+    this.partialMatches = const [],
+    this.suggestion,
+  });
+
+  factory SearchResponse.fromJson(Map<String, dynamic> json) => SearchResponse(
+    bestMatch: json['best_match'] != null
+        ? PharmacyResult.fromJson(json['best_match'])
+        : null,
+    alternatives: (json['alternatives'] as List? ?? [])
+        .map((a) => PharmacyResult.fromJson(a))
+        .toList(),
+    partialMatches: (json['partial_matches'] as List? ?? [])
+        .map((p) => PharmacyResult.fromJson(p))
+        .toList(),
+    suggestion: json['suggestion'],
+  );
+
+  bool get hasFullMatch => bestMatch != null;
+}
+```
