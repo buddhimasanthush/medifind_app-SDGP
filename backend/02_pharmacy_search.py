@@ -84,3 +84,30 @@ async def search_pharmacies(
     - All filtering uses indexes (no table scans)
     - Handles 50,000+ medicines × 100+ pharmacies
     """
+
+    med_ids = [m.medicine_id for m in medicines]
+    med_qtys = [m.quantity for m in medicines]
+    total_meds = len(medicines)
+
+    # ── Call Supabase RPC ──
+    async with httpx.AsyncClient() as client:
+        response = await client.post(
+            f"{SUPABASE_URL}/rest/v1/rpc/search_pharmacies",
+            headers={
+                "apikey": SUPABASE_KEY,
+                "Authorization": f"Bearer {SUPABASE_KEY}",
+                "Content-Type": "application/json",
+            },
+            json={
+                "user_lng": longitude,
+                "user_lat": latitude,
+                "radius_m": radius_meters,
+                "med_ids": med_ids,
+                "med_qtys": med_qtys,
+                "total_meds": total_meds,
+                "max_results": 10,
+            },
+            timeout=15.0,
+        )
+        response.raise_for_status()
+        rows = response.json()
