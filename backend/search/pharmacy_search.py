@@ -214,3 +214,8 @@ def response_to_dict(resp: SearchResponse) -> dict:
         }
 
     return {
+        "best_match": pharmacy_dict(resp.best_match) if resp.best_match else None,
+        "alternatives": [pharmacy_dict(a) for a in resp.alternatives],
+        "partial_matches": [pharmacy_dict(p) for p in resp.partial_matches],
+        "suggestion": resp.suggestion,
+    }
