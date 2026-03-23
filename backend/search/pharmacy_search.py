@@ -22,3 +22,11 @@ SUPABASE_KEY = os.environ["SUPABASE_ANON_KEY"]  # your anon/service key
 
 @dataclass
 class MedicineRequest:
+    medicine_id: str   # UUID of the generic medicine
+    quantity: int      # how many units needed
+
+
+@dataclass
+class SelectedItem:
+    medicine_id: str
+    brand_id: str
