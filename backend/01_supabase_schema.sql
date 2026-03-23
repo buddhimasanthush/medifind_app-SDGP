@@ -59,3 +59,22 @@ CREATE TABLE inventory (
     updated_at      TIMESTAMPTZ DEFAULT now(),
     UNIQUE (pharmacy_id, brand_id)
 );
+
+-- ============================================================
+-- INDEXES (these make the algorithm fast)
+-- ============================================================
+
+-- Spatial index — makes ST_DWithin use the index, not scan every row
+CREATE INDEX idx_pharmacies_location ON pharmacies USING GIST (location);
+
+-- Only query open pharmacies
+CREATE INDEX idx_pharmacies_open ON pharmacies (is_open) WHERE is_open = TRUE;
+
+-- Brand → medicine lookup
+CREATE INDEX idx_brands_medicine ON brands (medicine_id);
+
+-- Inventory: the main workhorse index
+CREATE INDEX idx_inventory_pharm_brand ON inventory (pharmacy_id, brand_id);
+
+-- Price lookup optimization
+CREATE INDEX idx_inventory_pharm_brand_price ON inventory (pharmacy_id, brand_id, price);
