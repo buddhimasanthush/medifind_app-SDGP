@@ -102,3 +102,11 @@ async def search_pharmacies(
                 "user_lng": longitude,
                 "user_lat": latitude,
                 "radius_m": radius_meters,
+                "med_ids": med_ids,
+                "med_qtys": med_qtys,
+                "total_meds": total_meds,
+                "max_results": 10,
+            },
+            timeout=15.0,
+        )
+        response.raise_for_status()
