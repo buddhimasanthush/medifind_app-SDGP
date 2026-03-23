@@ -126,3 +126,11 @@ async def search_pharmacies(
                 quantity=int(item["quantity"]),
             )
             for item in row["items"]
+        ]
+
+        result = PharmacyResult(
+            pharmacy_id=row["pharmacy_id"],
+            pharmacy_name=row["pharmacy_name"],
+            distance_meters=float(row["distance_meters"]),
+            is_full_match=bool(row["is_full_match"]),
+            matched_medicines=int(row["matched_medicines"]),
