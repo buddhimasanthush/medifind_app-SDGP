@@ -147,3 +147,40 @@ AS $$
         WHERE inv.quantity >= r.required_qty
         ORDER BY n.id, r.medicine_id, inv.price ASC
     ),
+
+    -- Step 4: Aggregate per pharmacy
+    totals AS (
+        SELECT
+            c.pharm_id,
+            c.pharm_name,
+            c.dist,
+            COUNT(DISTINCT c.medicine_id)::int  AS matched,
+            SUM(c.price * c.required_qty)       AS price_total,
+            jsonb_agg(jsonb_build_object(
+                'medicine_id', c.medicine_id,
+                'brand_id',    c.brand_id,
+                'brand_name',  c.brand_name,
+                'price',       c.price,
+                'quantity',    c.required_qty
+            )) AS item_list
+        FROM cheapest c
+        GROUP BY c.pharm_id, c.pharm_name, c.dist
+    )
+
+    -- Step 5: Return sorted — full matches first, then by price, then distance
+    SELECT
+        t.pharm_id,
+        t.pharm_name,
+        ROUND(t.dist::numeric, 1),
+        t.matched,
+        total_meds,
+        (t.matched = total_meds),
+        ROUND(t.price_total, 2),
+        t.item_list
+    FROM totals t
+    ORDER BY
+        (t.matched = total_meds) DESC,
+        t.price_total ASC,
+        t.dist ASC
+    LIMIT max_results;
+$$;
