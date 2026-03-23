@@ -151,3 +151,50 @@ def extract_with_deepseek(ocr_text: str, retries: int = MAX_RETRIES) -> dict:
             return {"error": f"DeepSeek failed: {err_str}"}
 
     return {"error": "DeepSeek failed after all retries"}
+
+
+# ── Heuristic fallback parser ─────────────────────────────────────────────────
+def build_medicines_from_ocr_text(ocr_text: str) -> dict:
+    """Last-resort fallback: heuristically parse medicines from OCR text."""
+    medicines = []
+    med_keywords = ["mg", "ml", "tablet", "capsule", "syrup", "tab", "cap",
+                    "injection", "drops", "cream", "ointment"]
+
+    raw_lines = re.split(r'[,;\n]', ocr_text)
+
+    seen = set()
+    for line in raw_lines:
+        line = line.strip()
+        if any(kw in line.lower() for kw in med_keywords) and len(line) > 4:
+            if line not in seen:
+                seen.add(line)
+                medicines.append({
+                    "drug_name": line,
+                    "strength": "",
+                    "dosage_form": "tablet",
+                    "instructions": "As directed by doctor",
+                    "frequency": "As directed",
+                    "duration": "As directed",
+                    "quantity": "1"
+                })
+
+    if not medicines:
+        tokens = [t for t in ocr_text.split() if len(t) > 4][:5]
+        for t in tokens:
+            medicines.append({
+                "drug_name": t,
+                "strength": "",
+                "dosage_form": "tablet",
+                "instructions": "As directed by doctor",
+                "frequency": "As directed",
+                "duration": "As directed",
+                "quantity": "1"
+            })
+
+    return {
+        "confidence": "low",
+        "prescriber": None,
+        "patient": None,
+        "diagnosis_notes": "Extracted using OCR fallback",
+        "medications": medicines
+    }
