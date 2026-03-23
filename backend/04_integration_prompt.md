@@ -41,3 +41,106 @@ This file contains:
 **The backend is deployed on Railway** with these env vars already set:
 - `SUPABASE_URL`
 - `SUPABASE_ANON_KEY`
+
+---
+
+## What you need to build
+
+### A. Backend: Add the API endpoint to the existing Railway Python server
+
+Add a new POST endpoint to the existing FastAPI app:
+
+**Endpoint:** `POST /api/search-pharmacy`
+
+**Request body:**
+```json
+{
+  "latitude": 6.9271,
+  "longitude": 79.8612,
+  "radius_meters": 7000,
+  "medicines": [
+    { "medicine_id": "uuid-string", "quantity": 2 },
+    { "medicine_id": "uuid-string", "quantity": 1 }
+  ]
+}
+```
+
+**Response body (success — full match):**
+```json
+{
+  "best_match": {
+    "pharmacy_id": "uuid",
+    "pharmacy_name": "City Pharmacy",
+    "distance_meters": 1234.5,
+    "is_full_match": true,
+    "matched_medicines": 2,
+    "total_required": 2,
+    "total_price": 850.00,
+    "items": [
+      {
+        "medicine_id": "uuid",
+        "brand_id": "uuid",
+        "brand_name": "Panadol",
+        "price": 350.00,
+        "quantity": 2
+      }
+    ]
+  },
+  "alternatives": [ ... ],
+  "partial_matches": [],
+  "suggestion": null
+}
+```
+
+**Response body (no full match — partial results):**
+```json
+{
+  "best_match": null,
+  "alternatives": [],
+  "partial_matches": [
+    {
+      "pharmacy_id": "uuid",
+      "pharmacy_name": "MediPlus",
+      "distance_meters": 2100.3,
+      "is_full_match": false,
+      "matched_medicines": 1,
+      "total_required": 2,
+      "total_price": 350.00,
+      "items": [ ... ]
+    }
+  ],
+  "suggestion": "No single pharmacy has all 2 medicines. MediPlus covers 1/2. Consider splitting your order across pharmacies."
+}
+```
+
+**Implementation:**
+```python
+from fastapi import FastAPI, HTTPException
+from pydantic import BaseModel
+from pharmacy_search import search_pharmacies, MedicineRequest, response_to_dict
+
+class SearchRequestBody(BaseModel):
+    latitude: float
+    longitude: float
+    radius_meters: int = 7000
+    medicines: list[dict]
+
+@app.post("/api/search-pharmacy")
+async def search_pharmacy(body: SearchRequestBody):
+    try:
+        meds = [
+            MedicineRequest(m["medicine_id"], m["quantity"])
+            for m in body.medicines
+        ]
+        result = await search_pharmacies(
+            latitude=body.latitude,
+            longitude=body.longitude,
+            medicines=meds,
+            radius_meters=body.radius_meters,
+        )
+        return response_to_dict(result)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+```
+
+Make sure `httpx` is in `requirements.txt`.
