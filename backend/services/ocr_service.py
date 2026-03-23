@@ -122,6 +122,12 @@ def extract_with_deepseek(ocr_text: str, retries: int = MAX_RETRIES) -> dict:
 
             raw_text = response.choices[0].message.content.strip()
             print(f"DeepSeek raw response ({len(raw_text)} chars)")
+
+            # Strip markdown code fences if present
+            if raw_text.startswith("```"):
+                raw_text = re.sub(r'^```(?:json)?\s*', '', raw_text)
+                raw_text = re.sub(r'\s*```$', '', raw_text).strip()
+
             return json.loads(raw_text)
 
         except json.JSONDecodeError as je:
