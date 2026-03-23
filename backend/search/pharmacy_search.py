@@ -198,3 +198,11 @@ def response_to_dict(resp: SearchResponse) -> dict:
             "brand_id": item.brand_id,
             "brand_name": item.brand_name,
             "price": item.price,
+            "quantity": item.quantity,
+        }
+
+    def pharmacy_dict(p: PharmacyResult) -> dict:
+        return {
+            "pharmacy_id": p.pharmacy_id,
+            "pharmacy_name": p.pharmacy_name,
+            "distance_meters": p.distance_meters,
