@@ -340,3 +340,44 @@ class PharmacySearchRepository {
 - Shows: pharmacy name, distance (convert meters to km: `(distance / 1000).toStringAsFixed(1)` km), total price in LKR
 - Badge: "All medicines available" (green) or "3/5 available" (orange)
 - Expandable section showing the item-by-item breakdown
+
+---
+
+### C. Flutter: Medicine selector
+
+The user needs to search and select medicines. Query the `medicines` table from Supabase directly (this is just a simple lookup, not the search algorithm):
+
+```dart
+// In the Flutter app — fetch medicine list for autocomplete
+final response = await Supabase.instance.client
+    .from('medicines')
+    .select('id, generic_name')
+    .ilike('generic_name', '%$query%')
+    .limit(20);
+```
+
+Use a `SearchableDropdown` or `TypeAheadField` widget. Each selected medicine gets a quantity stepper (default 1).
+
+---
+
+### D. Permissions
+
+The Flutter app needs location permission. Add to `AndroidManifest.xml`:
+```xml
+<uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+<uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+```
+
+And to `Info.plist` for iOS:
+```xml
+<key>NSLocationWhenInUseUsageDescription</key>
+<string>We need your location to find nearby pharmacies</string>
+```
+
+Use the `geolocator` package to get current position:
+```dart
+final position = await Geolocator.getCurrentPosition(
+  desiredAccuracy: LocationAccuracy.high,
+);
+// position.latitude, position.longitude
+```
