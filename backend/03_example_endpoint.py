@@ -49,3 +49,28 @@ async def search_pharmacy(body: SearchRequestBody):
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+
+# ════════════════════════════════════════════════════
+# OPTION B: Flask (if you're using Flask)
+# ════════════════════════════════════════════════════
+
+# import asyncio
+# from flask import Flask, request, jsonify
+#
+# app = Flask(__name__)
+#
+# @app.route("/api/search-pharmacy", methods=["POST"])
+# def search_pharmacy():
+#     body = request.get_json()
+#     meds = [
+#         MedicineRequest(m["medicine_id"], m["quantity"])
+#         for m in body["medicines"]
+#     ]
+#     result = asyncio.run(search_pharmacies(
+#         latitude=body["latitude"],
+#         longitude=body["longitude"],
+#         medicines=meds,
+#         radius_meters=body.get("radius_meters", 7000),
+#     ))
+#     return jsonify(response_to_dict(result))
