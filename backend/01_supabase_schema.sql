@@ -105,3 +105,21 @@ RETURNS TABLE (
 )
 LANGUAGE sql STABLE
 AS $$
+    WITH
+    -- Step 1: Find nearby OPEN pharmacies using spatial index
+    nearby AS (
+        SELECT
+            p.id,
+            p.name,
+            ST_Distance(
+                p.location,
+                ST_SetSRID(ST_MakePoint(user_lng, user_lat), 4326)::geography
+            ) AS dist
+        FROM pharmacies p
+        WHERE p.is_open = TRUE
+          AND ST_DWithin(
+                p.location,
+                ST_SetSRID(ST_MakePoint(user_lng, user_lat), 4326)::geography,
+                radius_m
+              )
+    ),
