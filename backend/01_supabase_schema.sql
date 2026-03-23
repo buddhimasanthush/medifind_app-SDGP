@@ -123,3 +123,27 @@ AS $$
                 radius_m
               )
     ),
+
+    -- Step 2: Unnest the medicine arrays into rows
+    required AS (
+        SELECT unnest(med_ids) AS medicine_id, unnest(med_qtys) AS required_qty
+    ),
+
+    -- Step 3: For each pharmacy+medicine, pick the CHEAPEST brand with enough stock
+    cheapest AS (
+        SELECT DISTINCT ON (n.id, r.medicine_id)
+            n.id          AS pharm_id,
+            n.name        AS pharm_name,
+            n.dist,
+            r.medicine_id,
+            r.required_qty,
+            b.id          AS brand_id,
+            b.brand_name,
+            inv.price
+        FROM nearby n
+        JOIN inventory inv ON inv.pharmacy_id = n.id
+        JOIN brands b      ON b.id = inv.brand_id
+        JOIN required r    ON r.medicine_id = b.medicine_id
+        WHERE inv.quantity >= r.required_qty
+        ORDER BY n.id, r.medicine_id, inv.price ASC
+    ),
