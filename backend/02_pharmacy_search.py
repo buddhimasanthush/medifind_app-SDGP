@@ -143,3 +143,42 @@ async def search_pharmacies(
             full_matches.append(result)
         else:
             partial_matches.append(result)
+
+    # ── Build response ──
+    if full_matches:
+        return SearchResponse(
+            best_match=full_matches[0],
+            alternatives=full_matches[1:],
+            partial_matches=[],
+            suggestion=None,
+        )
+
+    # No full match — generate suggestion
+    suggestion = _build_suggestion(partial_matches, total_meds)
+    return SearchResponse(
+        best_match=None,
+        alternatives=[],
+        partial_matches=partial_matches,
+        suggestion=suggestion,
+    )
+
+
+def _build_suggestion(partials: list[PharmacyResult], total: int) -> str:
+    """Generate a helpful fallback message."""
+    if not partials:
+        return "No pharmacies found nearby with the requested medicines. Try increasing your search radius."
+
+    best = partials[0]
+    missing = total - best.matched_medicines
+
+    if missing == 1:
+        return (
+            f"{best.pharmacy_name} has {best.matched_medicines}/{total} medicines. "
+            f"1 medicine is unavailable — try an alternative brand or a second pharmacy."
+        )
+
+    return (
+        f"No single pharmacy has all {total} medicines. "
+        f"{best.pharmacy_name} covers {best.matched_medicines}/{total}. "
+        f"Consider splitting your order across pharmacies."
+    )
