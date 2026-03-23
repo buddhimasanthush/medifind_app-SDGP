@@ -118,3 +118,11 @@ async def search_pharmacies(
 
     for row in rows:
         items = [
+            SelectedItem(
+                medicine_id=item["medicine_id"],
+                brand_id=item["brand_id"],
+                brand_name=item["brand_name"],
+                price=float(item["price"]),
+                quantity=int(item["quantity"]),
+            )
+            for item in row["items"]
