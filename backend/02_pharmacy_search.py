@@ -33,3 +33,23 @@ class SelectedItem:
     brand_name: str
     price: float
     quantity: int
+
+
+@dataclass
+class PharmacyResult:
+    pharmacy_id: str
+    pharmacy_name: str
+    distance_meters: float
+    is_full_match: bool
+    matched_medicines: int
+    total_required: int
+    total_price: float
+    items: list[SelectedItem]
+
+
+@dataclass
+class SearchResponse:
+    best_match: PharmacyResult | None
+    alternatives: list[PharmacyResult]
+    partial_matches: list[PharmacyResult]
+    suggestion: str | None
