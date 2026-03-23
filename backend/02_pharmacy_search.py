@@ -111,3 +111,35 @@ async def search_pharmacies(
         )
         response.raise_for_status()
         rows = response.json()
+
+    # ── Process results ──
+    full_matches: list[PharmacyResult] = []
+    partial_matches: list[PharmacyResult] = []
+
+    for row in rows:
+        items = [
+            SelectedItem(
+                medicine_id=item["medicine_id"],
+                brand_id=item["brand_id"],
+                brand_name=item["brand_name"],
+                price=float(item["price"]),
+                quantity=int(item["quantity"]),
+            )
+            for item in row["items"]
+        ]
+
+        result = PharmacyResult(
+            pharmacy_id=row["pharmacy_id"],
+            pharmacy_name=row["pharmacy_name"],
+            distance_meters=float(row["distance_meters"]),
+            is_full_match=bool(row["is_full_match"]),
+            matched_medicines=int(row["matched_medicines"]),
+            total_required=int(row["total_required"]),
+            total_price=float(row["total_price"]),
+            items=items,
+        )
+
+        if result.is_full_match:
+            full_matches.append(result)
+        else:
+            partial_matches.append(result)
