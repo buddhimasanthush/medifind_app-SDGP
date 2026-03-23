@@ -78,3 +78,37 @@ User sends: { lat, lng, medicines: [{id, qty}, ...] }
 ### 3. Flutter app
 
 Give `04_integration_prompt.md` to whoever is building the Flutter frontend. It explains exactly what API to call and what response to expect.
+
+---
+
+## Database structure
+
+```
+pharmacies
+├── id (UUID, auto-generated)
+├── name ("City Pharmacy")
+├── latitude (6.9271)
+├── longitude (79.8612)
+├── is_open (true/false)
+└── location (auto-set from lat/lng — DO NOT set manually)
+
+medicines
+├── id (UUID)
+└── generic_name ("Paracetamol")
+
+brands
+├── id (UUID)
+├── medicine_id → medicines.id
+└── brand_name ("Panadol")
+
+inventory
+├── id (UUID)
+├── pharmacy_id → pharmacies.id
+├── brand_id → brands.id
+├── price (350.00)
+└── quantity (50)
+```
+
+**Key relationship:** medicine → has many brands → each brand stocked at pharmacies via inventory.
+
+Example: "Paracetamol" (medicine) → "Panadol", "Calpol", "Tylenol" (brands) → each pharmacy has different brands at different prices.
