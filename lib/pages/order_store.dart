@@ -1,22 +1,9 @@
-class MedicineItem {
-  final String name;
-  final String category;
-  final int quantity;
-
-  const MedicineItem({
-    required this.name,
-    required this.category,
-    required this.quantity,
-  });
-}
-
 class OrderItem {
   final String pharmacyName;
   final String amount;
   final String orderId;
   final String deliveredAt;
   final String status;
-  final List<MedicineItem> medicines;
 
   const OrderItem({
     required this.pharmacyName,
@@ -24,7 +11,6 @@ class OrderItem {
     required this.orderId,
     required this.deliveredAt,
     required this.status,
-    this.medicines = const [],
   });
 }
 
@@ -35,6 +21,6 @@ class OrderStore {
   final List<OrderItem> orders = [];
 
   void addOrder(OrderItem order) {
-    orders.insert(0, order);
+    orders.insert(0, order); // newest first
   }
 }
