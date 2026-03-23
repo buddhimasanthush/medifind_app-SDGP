@@ -112,3 +112,77 @@ inventory
 **Key relationship:** medicine → has many brands → each brand stocked at pharmacies via inventory.
 
 Example: "Paracetamol" (medicine) → "Panadol", "Calpol", "Tylenol" (brands) → each pharmacy has different brands at different prices.
+
+---
+
+## API request/response
+
+### Request
+```json
+POST /api/search-pharmacy
+
+{
+  "latitude": 6.9271,
+  "longitude": 79.8612,
+  "radius_meters": 7000,
+  "medicines": [
+    { "medicine_id": "uuid-of-paracetamol", "quantity": 2 },
+    { "medicine_id": "uuid-of-amoxicillin", "quantity": 1 }
+  ]
+}
+```
+
+### Response (full match found)
+```json
+{
+  "best_match": {
+    "pharmacy_id": "abc-123",
+    "pharmacy_name": "City Pharmacy",
+    "distance_meters": 1234.5,
+    "is_full_match": true,
+    "matched_medicines": 2,
+    "total_required": 2,
+    "total_price": 850.00,
+    "items": [
+      {
+        "medicine_id": "uuid-paracetamol",
+        "brand_id": "uuid-panadol",
+        "brand_name": "Panadol",
+        "price": 350.00,
+        "quantity": 2
+      },
+      {
+        "medicine_id": "uuid-amoxicillin",
+        "brand_id": "uuid-amoxil",
+        "brand_name": "Amoxil",
+        "price": 150.00,
+        "quantity": 1
+      }
+    ]
+  },
+  "alternatives": [],
+  "partial_matches": [],
+  "suggestion": null
+}
+```
+
+### Response (no full match)
+```json
+{
+  "best_match": null,
+  "alternatives": [],
+  "partial_matches": [
+    {
+      "pharmacy_id": "def-456",
+      "pharmacy_name": "MediPlus",
+      "distance_meters": 2100.3,
+      "is_full_match": false,
+      "matched_medicines": 1,
+      "total_required": 2,
+      "total_price": 350.00,
+      "items": [...]
+    }
+  ],
+  "suggestion": "No single pharmacy has all 2 medicines. MediPlus covers 1/2. Consider splitting your order across pharmacies."
+}
+```
