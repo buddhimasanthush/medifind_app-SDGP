@@ -142,3 +142,11 @@ async def search_pharmacies(
         if result.is_full_match:
             full_matches.append(result)
         else:
+            partial_matches.append(result)
+
+    # ── Build response ──
+    if full_matches:
+        return SearchResponse(
+            best_match=full_matches[0],
+            alternatives=full_matches[1:],
+            partial_matches=[],
