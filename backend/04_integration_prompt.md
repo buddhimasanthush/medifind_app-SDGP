@@ -381,3 +381,51 @@ final position = await Geolocator.getCurrentPosition(
 );
 // position.latitude, position.longitude
 ```
+
+---
+
+## Important notes
+
+1. **DO NOT call the Supabase RPC function directly from Flutter.** The Flutter app calls the Railway Python backend, which calls Supabase. This keeps the logic centralized and secure.
+
+2. **The algorithm is already complete and tested.** Do not modify `pharmacy_search.py` or the SQL function. Just wire them together.
+
+3. **Currency is LKR (Sri Lankan Rupee).** Display prices as `LKR 350.00` in the UI.
+
+4. **Distance is returned in meters.** Convert to km for display: `(distance / 1000).toStringAsFixed(1)` → "1.2 km"
+
+5. **The `medicines` table needs to be populated** with actual medicine data (generic names). This is a separate data entry task — the algorithm works with whatever data is in the table.
+
+6. **The `is_open` field on pharmacies** is a simple boolean for now. A future enhancement could use `opening_time`/`closing_time` fields, but the current algorithm just checks `is_open = TRUE`.
+
+---
+
+## Flow summary
+
+```
+User opens pharmacy search screen
+    → App gets GPS location
+    → User selects medicines + quantities
+    → App sends POST to Railway backend
+    → Backend calls Supabase RPC (1 query)
+    → PostgreSQL finds cheapest nearby pharmacy
+    → Result flows back: Supabase → Railway → Flutter
+    → App displays best pharmacy + alternatives
+```
+
+---
+
+## Dependencies to add
+
+**Python (requirements.txt):**
+```
+httpx
+```
+
+**Flutter (pubspec.yaml):**
+```yaml
+dependencies:
+  geolocator: ^10.1.0
+  http: ^1.1.0
+  # google_maps_flutter: ^2.5.0  # optional, for map view
+```
