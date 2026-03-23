@@ -186,3 +186,15 @@ POST /api/search-pharmacy
   "suggestion": "No single pharmacy has all 2 medicines. MediPlus covers 1/2. Consider splitting your order across pharmacies."
 }
 ```
+
+---
+
+## Why it's fast
+
+| Problem | How we solve it |
+|---------|----------------|
+| Finding nearby pharmacies | PostGIS spatial index (`ST_DWithin`) — not looping through all pharmacies |
+| Checking medicine availability | SQL JOIN with indexed columns — not Python loops |
+| Picking cheapest brand | `DISTINCT ON ... ORDER BY price` — done in 1 pass by PostgreSQL |
+| Multiple database calls | Everything is 1 RPC call — not N calls per pharmacy |
+| Large inventory tables | Composite B-tree indexes on `(pharmacy_id, brand_id)` |
