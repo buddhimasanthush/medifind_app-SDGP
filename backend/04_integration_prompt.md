@@ -279,3 +279,64 @@ class SearchResponse {
   bool get hasFullMatch => bestMatch != null;
 }
 ```
+
+#### B2. Repository
+
+**`pharmacy_search_repository.dart`**
+```dart
+import 'dart:convert';
+import 'package:http/http.dart' as http;
+
+class PharmacySearchRepository {
+  // Replace with your Railway backend URL
+  static const String _baseUrl = 'https://your-railway-app.up.railway.app';
+
+  Future<SearchResponse> searchPharmacies({
+    required double latitude,
+    required double longitude,
+    required List<MedicineRequest> medicines,
+    int radiusMeters = 7000,
+  }) async {
+    final response = await http.post(
+      Uri.parse('$_baseUrl/api/search-pharmacy'),
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({
+        'latitude': latitude,
+        'longitude': longitude,
+        'radius_meters': radiusMeters,
+        'medicines': medicines.map((m) => m.toJson()).toList(),
+      }),
+    );
+
+    if (response.statusCode == 200) {
+      return SearchResponse.fromJson(jsonDecode(response.body));
+    } else {
+      throw Exception('Search failed: ${response.statusCode}');
+    }
+  }
+}
+```
+
+#### B3. Screens — what they should do
+
+**`pharmacy_search_screen.dart`** (the main screen):
+1. Get user's current location using `geolocator` package
+2. Show a medicine selector — user picks medicines from a searchable list (query the `medicines` table from Supabase directly for autocomplete) and sets quantity for each
+3. "Search" button calls the repository
+4. Show a loading indicator while searching
+5. Navigate to result screen with the response
+
+**`pharmacy_result_screen.dart`** (results):
+1. If `response.hasFullMatch`:
+   - Show the best pharmacy as a highlighted card (name, distance in km, total price in LKR)
+   - Show the items list (brand name, price × quantity)
+   - Below that, show alternatives as smaller cards
+2. If `!response.hasFullMatch`:
+   - Show the suggestion text prominently
+   - Show partial matches as cards with a "X/Y medicines available" badge
+3. Optional: show pharmacy location on a map using `google_maps_flutter`
+
+**`pharmacy_card.dart`** (reusable widget):
+- Shows: pharmacy name, distance (convert meters to km: `(distance / 1000).toStringAsFixed(1)` km), total price in LKR
+- Badge: "All medicines available" (green) or "3/5 available" (orange)
+- Expandable section showing the item-by-item breakdown
