@@ -78,3 +78,30 @@ CREATE INDEX idx_inventory_pharm_brand ON inventory (pharmacy_id, brand_id);
 
 -- Price lookup optimization
 CREATE INDEX idx_inventory_pharm_brand_price ON inventory (pharmacy_id, brand_id, price);
+
+-- ============================================================
+-- SUPABASE RPC FUNCTION (the actual algorithm)
+-- This is what your Python backend calls
+-- ============================================================
+
+CREATE OR REPLACE FUNCTION search_pharmacies(
+    user_lng    DOUBLE PRECISION,
+    user_lat    DOUBLE PRECISION,
+    radius_m    INTEGER DEFAULT 7000,
+    med_ids     UUID[] DEFAULT '{}',
+    med_qtys    INTEGER[] DEFAULT '{}',
+    total_meds  INTEGER DEFAULT 0,
+    max_results INTEGER DEFAULT 10
+)
+RETURNS TABLE (
+    pharmacy_id       UUID,
+    pharmacy_name     TEXT,
+    distance_meters   NUMERIC,
+    matched_medicines INTEGER,
+    total_required    INTEGER,
+    is_full_match     BOOLEAN,
+    total_price       NUMERIC,
+    items             JSONB
+)
+LANGUAGE sql STABLE
+AS $$
