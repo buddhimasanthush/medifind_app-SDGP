@@ -182,3 +182,40 @@ def _build_suggestion(partials: list[PharmacyResult], total: int) -> str:
         f"{best.pharmacy_name} covers {best.matched_medicines}/{total}. "
         f"Consider splitting your order across pharmacies."
     )
+
+
+# ════════════════════════════════════════════════════
+# HELPER: Convert response to JSON-serializable dict
+# (use this in your API endpoint)
+# ════════════════════════════════════════════════════
+
+def response_to_dict(resp: SearchResponse) -> dict:
+    """Convert SearchResponse to a dict for JSON serialization."""
+
+    def item_dict(item: SelectedItem) -> dict:
+        return {
+            "medicine_id": item.medicine_id,
+            "brand_id": item.brand_id,
+            "brand_name": item.brand_name,
+            "price": item.price,
+            "quantity": item.quantity,
+        }
+
+    def pharmacy_dict(p: PharmacyResult) -> dict:
+        return {
+            "pharmacy_id": p.pharmacy_id,
+            "pharmacy_name": p.pharmacy_name,
+            "distance_meters": p.distance_meters,
+            "is_full_match": p.is_full_match,
+            "matched_medicines": p.matched_medicines,
+            "total_required": p.total_required,
+            "total_price": p.total_price,
+            "items": [item_dict(i) for i in p.items],
+        }
+
+    return {
+        "best_match": pharmacy_dict(resp.best_match) if resp.best_match else None,
+        "alternatives": [pharmacy_dict(a) for a in resp.alternatives],
+        "partial_matches": [pharmacy_dict(p) for p in resp.partial_matches],
+        "suggestion": resp.suggestion,
+    }
