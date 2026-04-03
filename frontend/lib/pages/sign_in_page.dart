@@ -52,7 +52,9 @@ class _SignInPageState extends State<SignInPage> with TickerProviderStateMixin {
     _usernameCtrl.dispose();
     _passwordCtrl.dispose();
     _slideCtrl.dispose();
-    for (final c in _fcs) c.dispose();
+    for (final c in _fcs) {
+      c.dispose();
+    }
     super.dispose();
   }
 
@@ -298,14 +300,14 @@ class _SignInPageState extends State<SignInPage> with TickerProviderStateMixin {
         decoration: InputDecoration(
           hintText: hint,
           hintStyle: TextStyle(
-              color: Colors.white.withOpacity(0.45),
+              color: Colors.white.withValues(alpha: 0.45),
               fontSize: 13,
               fontFamily: 'Poppins'),
           filled: false,
           enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(100),
               borderSide:
-                  BorderSide(color: Colors.white.withOpacity(0.5), width: 1)),
+                  BorderSide(color: Colors.white.withValues(alpha: 0.5), width: 1)),
           focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(100),
               borderSide: const BorderSide(color: Colors.white, width: 2)),
