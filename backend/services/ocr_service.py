@@ -11,12 +11,14 @@ from openai import OpenAI
 from PIL import Image, ImageEnhance, ImageFilter
 
 # ── DeepSeek Configuration ────────────────────────────────────────────────────
-DEEPSEEK_API_KEY = os.environ.get(
-    "DEEPSEEK_API_KEY",
-    "sk-12fbe20606204e60b32133f19993ec70"
-)
+DEEPSEEK_API_KEY = os.environ.get("DEEPSEEK_API_KEY")
 DEEPSEEK_BASE_URL = "https://api.deepseek.com"
 DEEPSEEK_MODEL = "deepseek-chat"
+
+if not DEEPSEEK_API_KEY:
+    print("WARNING: DEEPSEEK_API_KEY not found in environment!")
+else:
+    print(f"DeepSeek OCR initialized with key: {DEEPSEEK_API_KEY[:6]}...{DEEPSEEK_API_KEY[-4:]}")
 
 # Initialise OpenAI-compatible client pointed at DeepSeek
 client = OpenAI(api_key=DEEPSEEK_API_KEY, base_url=DEEPSEEK_BASE_URL)
