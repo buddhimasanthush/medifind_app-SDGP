@@ -2,4 +2,7 @@
 .vscode/
 __pycache__/
 __MACOSX/
-
+android/
+supabase/
+venv_audio/
+frontend/build_log.txt
