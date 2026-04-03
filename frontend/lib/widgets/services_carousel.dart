@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import '../pages/upload_prescription_main_page.dart';
-import '../pages/reminder_page.dart';
 import '../pages/previous_orders_page.dart';
 import '../pages/health_profile_page.dart';
 import '../pages/pharmacy_registration_page.dart';
@@ -16,13 +15,6 @@ class ServicesCarousel extends StatelessWidget {
         'icon': Icons.upload_file_rounded,
         'gradient': [const Color(0xFF0796DE), const Color(0xFF0567A8)],
         'page': const UploadPrescriptionMainPage(),
-      },
-      {
-        'name': 'Reminder',
-        'icon': Icons.alarm_rounded,
-        'gradient': [const Color(0xFF0796DE), const Color(0xFF0567A8)],
-        // Shows landing page with floating cards first
-        'page': const ReminderPage(),
       },
       {
         'name': 'Past\nOrders',
