@@ -92,10 +92,10 @@ class GalleryPickerPage extends StatelessWidget {
                               onTap: () {
                                 // Simulate picking image, show uploading, then go to success
                                 _showUploadingDialog(context);
+                                final navigator = Navigator.of(context);
                                 Future.delayed(const Duration(seconds: 2), () {
-                                  Navigator.pop(context); // Close dialog
-                                  Navigator.pushReplacement(
-                                    context,
+                                  navigator.pop(); // Close dialog
+                                  navigator.pushReplacement(
                                     MaterialPageRoute(
                                       builder: (context) =>
                                           const DocVerificationSuccessPage(),
@@ -285,7 +285,7 @@ class GalleryPickerPage extends StatelessWidget {
     showDialog(
       context: context,
       barrierDismissible: false,
-      barrierColor: Colors.black.withOpacity(0.45),
+      barrierColor: Colors.black.withValues(alpha: 0.45),
       builder: (context) => Center(
         child: Material(
           color: Colors.transparent,
@@ -297,15 +297,15 @@ class GalleryPickerPage extends StatelessWidget {
               borderRadius: BorderRadius.circular(20),
               boxShadow: [
                 BoxShadow(
-                    color: const Color(0xFF0796DE).withOpacity(0.18),
+                    color: const Color(0xFF0796DE).withValues(alpha: 0.18),
                     blurRadius: 24,
                     offset: const Offset(0, 6)),
               ],
             ),
-            child: Column(
+            child: const Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const SizedBox(
+                SizedBox(
                   width: 48,
                   height: 48,
                   child: CircularProgressIndicator(
@@ -314,8 +314,8 @@ class GalleryPickerPage extends StatelessWidget {
                         AlwaysStoppedAnimation<Color>(Color(0xFF0796DE)),
                   ),
                 ),
-                const SizedBox(height: 20),
-                const Text(
+                SizedBox(height: 20),
+                Text(
                   'Uploading document...',
                   style: TextStyle(
                     color: Color(0xFF2D2D2D),
@@ -325,8 +325,8 @@ class GalleryPickerPage extends StatelessWidget {
                     decoration: TextDecoration.none,
                   ),
                 ),
-                const SizedBox(height: 6),
-                const Text(
+                SizedBox(height: 6),
+                Text(
                   'Please wait',
                   style: TextStyle(
                     color: Color(0xFF9F9EA5),
@@ -372,14 +372,14 @@ class GalleryPickerPage extends StatelessWidget {
                 child: Container(
                   width: 153.81,
                   height: 153.81,
-                  decoration: BoxDecoration(
+                  decoration: const BoxDecoration(
                     shape: BoxShape.circle,
                     gradient: LinearGradient(
-                      begin: const Alignment(0.93, 0.35),
-                      end: const Alignment(0.06, 0.40),
+                      begin: Alignment(0.93, 0.35),
+                      end: Alignment(0.06, 0.40),
                       colors: [
-                        const Color(0xAFFDEDCA),
-                        const Color(0xFF0A9BE2)
+                        Color(0xAFFDEDCA),
+                        Color(0xFF0A9BE2)
                       ],
                     ),
                   ),
@@ -397,14 +397,14 @@ class GalleryPickerPage extends StatelessWidget {
                 child: Container(
                   width: 89.35,
                   height: 89.35,
-                  decoration: BoxDecoration(
+                  decoration: const BoxDecoration(
                     shape: BoxShape.circle,
                     gradient: LinearGradient(
-                      begin: const Alignment(0.93, 0.35),
-                      end: const Alignment(0.06, 0.40),
+                      begin: Alignment(0.93, 0.35),
+                      end: Alignment(0.06, 0.40),
                       colors: [
-                        const Color(0xFFFDEDCA),
-                        const Color(0xFF0A9BE2)
+                        Color(0xFFFDEDCA),
+                        Color(0xFF0A9BE2)
                       ],
                     ),
                   ),
@@ -422,14 +422,14 @@ class GalleryPickerPage extends StatelessWidget {
                 child: Container(
                   width: 94.08,
                   height: 94.08,
-                  decoration: BoxDecoration(
+                  decoration: const BoxDecoration(
                     shape: BoxShape.circle,
                     gradient: LinearGradient(
-                      begin: const Alignment(0.93, 0.35),
-                      end: const Alignment(0.06, 0.40),
+                      begin: Alignment(0.93, 0.35),
+                      end: Alignment(0.06, 0.40),
                       colors: [
-                        const Color(0xAFFDEDCA),
-                        const Color(0xFF0A9BE2)
+                        Color(0xAFFDEDCA),
+                        Color(0xFF0A9BE2)
                       ],
                     ),
                   ),
