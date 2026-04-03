@@ -106,7 +106,7 @@ class _NotificationsSettingsPageState extends State<NotificationsSettingsPage> {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 10,
             offset: const Offset(0, 4),
           )
@@ -137,8 +137,8 @@ class _NotificationsSettingsPageState extends State<NotificationsSettingsPage> {
           Switch(
             value: value,
             onChanged: onChanged,
-            activeTrackColor: const Color(0xFF0796DE).withOpacity(0.5),
-            activeColor: const Color(0xFF0796DE),
+            activeTrackColor: const Color(0xFF0796DE).withValues(alpha: 0.5),
+            activeThumbColor: const Color(0xFF0796DE),
           ),
         ],
       ),
