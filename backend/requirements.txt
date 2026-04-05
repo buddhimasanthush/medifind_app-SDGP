@@ -1,20 +1,13 @@
---extra-index-url https://download.pytorch.org/whl/cpu
-
 fastapi
 uvicorn
 supabase
 python-multipart
-numpy==1.26.4
+numpy<2.0
 pillow>=10.0.0
 scikit-image==0.24.0
-easyocr==1.7.1
-torch==2.3.1+cpu
-torchvision==0.18.1+cpu
+easyocr
+google-genai
 pydantic
 python-dotenv
 httpx
 openai
-aiosmtplib
-email-validator
-bcrypt
-python-jose[cryptography]
